@@ -1,8 +1,10 @@
 #include "ofApp.h"
 
+#include <cstddef>
+
 //--------------------------------------------------------------
 void ofApp::setup(){
-
+  ofBackground(ofColor::black);
 }
 
 //--------------------------------------------------------------
@@ -12,6 +14,18 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+  for(const auto& node : nodes) {
+    ofDrawCircle(
+      node.x,
+      node.y,
+      radius
+    );
+    for(const auto& next_node : nodes) {
+      if(node == next_node) continue; 
+      ofDrawLine(node.x, node.y, next_node.x, next_node.y);
+    }
+  }
+
 
 }
 
@@ -22,8 +36,17 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
-}
+  switch (key) {
+    case 'd':
+      for(std::size_t i = 0; i < 3; ++i) {
+        nodes.push_back({
+          ofRandom(radius, ofGetWidth()),
+          ofRandom(radius, ofGetHeight()),
+        });
+      }
+      break;
+  }
+} 
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){

@@ -2,6 +2,9 @@
 
 #include "ofMain.h"
 
+#include <vector>
+#include <tuple>
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -23,4 +26,7 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo) override;
 		void gotMessage(ofMessage msg) override;
 		
+	std::vector<ofVec2f> nodes;
+	std::vector<std::tuple<ofVec2f, ofVec2f> > links;
+	const int radius = 8;
 };
