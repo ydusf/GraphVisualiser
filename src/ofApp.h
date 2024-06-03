@@ -2,7 +2,7 @@
 
 #include "ofMain.h"
 #include "Graph.h"
-#include "Grid.h"
+#include "ofxGui.h"
 
 #include <vector>
 #include <memory>
@@ -35,9 +35,18 @@ class ofApp : public ofBaseApp{
 	std::vector<std::shared_ptr<Node> > nodes;
 	std::vector<std::shared_ptr<Link> > links;
 	std::shared_ptr<Node> node_being_dragged;
-	Grid grid;
 
-	const float GRAVITY = 1.1;
-	float FORCE_MULTI = 1000;
-	float lerp_val = 0.2;
+	const float GRAVITY = 1.1f;
+	const float START_DIST_MULTI = 1.0f;
+	float force_multi = 1000.0f;
+	float lerp_val = 0.2f;
+	float radius = 4.0f;
+	float prev_radius = radius;
+
+	ofxPanel gui;
+	ofxFloatSlider force_multi_slider;
+	ofxFloatSlider radius_slider;
+	ofxLabel node_count_label;
+	ofxLabel link_count_label;
+	ofxVec2Slider vec2Slider;
 };

@@ -6,8 +6,6 @@ struct Node {
   ofVec2f pos, vel;
   float radius;
   ofColor color;
-  std::tuple<int, int> grid_cell;
-  std::vector<std::tuple<int, int> > neighbour_cells;
 
   Node(ofVec2f pos, float radius);
   Node(ofVec2f pos, float radius, ofColor color);
@@ -16,9 +14,6 @@ struct Node {
 
   void update();
   void draw();
-  void update_grid_cell();
-  std::tuple<int, int> get_grid_cell();
-  void update_neighbour_cells();
   
   ~Node();
 };

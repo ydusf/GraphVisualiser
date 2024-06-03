@@ -8,22 +8,27 @@
 void ofApp::setup(){
   ofBackground(ofColor::black);
   ofEnableSmoothing();
-  ofSetFrameRate(60);
+  ofSetFrameRate(0);
   ofSetVerticalSync(0);
+
+  gui.setup();
+  gui.add(force_multi_slider.setup("Force Multiplier", 500.0f, 1.0f, 3000.0f));
+  gui.add(radius_slider.setup("Node Radius", 4.0f, 4.0f, 32.0f));
+  gui.add(node_count_label.setup("Node Count", std::to_string(nodes.size())));
+  gui.add(link_count_label.setup("Node Count", std::to_string(links.size())));
 }
 
 void ofApp::apply_forces() {
   // gravity
   for (auto& node : nodes) {
-    ofVec2f gravity = node->pos * -1 * GRAVITY;
-    node->vel = gravity;
+    node->vel = node->pos * -1 * GRAVITY;
   }
 
   // node-node repulsion
   for(auto& curr_node : nodes) {
     for(auto& next_node : nodes) {
       const ofVec2f dir = next_node->pos - curr_node->pos;
-      const ofVec2f force = dir / (dir.lengthSquared()) * FORCE_MULTI;
+      const ofVec2f force = dir / (dir.lengthSquared()) * force_multi;
       curr_node->vel -= force;
       next_node->vel += force;
     }
@@ -39,7 +44,20 @@ void ofApp::apply_forces() {
 
 //--------------------------------------------------------------
 void ofApp::update(){
+  // gui updates
   ofSetWindowTitle("FPS: " + std::to_string(ofGetFrameRate()) + " | Nodes: " + std::to_string(nodes.size()) + " | Links: " + std::to_string(links.size()));
+  force_multi = force_multi_slider;
+  radius = radius_slider;
+  node_count_label.setup("Node Count: ", std::to_string(nodes.size()));
+  link_count_label.setup("Node Count: ", std::to_string(links.size()));
+  if(radius != prev_radius) {
+    prev_radius = radius;
+    for(auto& node : nodes) {
+      node->radius = radius;
+    }
+  }
+
+  // graph updates
   apply_forces();
   for (const auto& node : nodes) {
     node->update();
@@ -56,6 +74,10 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+  // gui draw
+  gui.draw();
+
+  // graph draw
   ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
   for (const auto& node : nodes) {
     node->draw();
@@ -72,14 +94,13 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  const int radius = 8.0f;
   switch (key) {
     case 'd':
       for(std::size_t i = 0; i < 25; ++i) {
-        auto new_node = std::make_shared<Node>(
+        const auto& new_node = std::make_shared<Node>(
           ofVec2f{
-            ofRandom(radius, ofGetWidth()-radius),
-            ofRandom(radius, ofGetHeight()/2)
+            ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
+            ofRandom(-START_DIST_MULTI*ofGetHeight() , START_DIST_MULTI*ofGetHeight())
           }, radius, ofColor{147.0f,206.0f,195.0f});
         nodes.push_back(new_node);
       }
@@ -93,7 +114,8 @@ void ofApp::keyPressed(int key){
       break;
     case 'r':
       if(nodes.size() < 1) break;
-      nodes.erase(nodes.begin());
+      nodes.clear();
+      links.clear();
       break;
   }
 } 
@@ -135,10 +157,13 @@ void ofApp::mouseReleased(int x, int y, int button){
 //--------------------------------------------------------------
 void ofApp::mouseScrolled(int x, int y, float scrollX, float scrollY){
   // zoom functionality
+  const float MIN_FORCE_MULTI = 200.0f, MAX_FORCE_MULTI = 2000.0f;
+  scrollY = std::clamp(scrollY, -1.0f, 1.0f);
+  std::cout << scrollY << '\n';
+  force_multi = std::clamp(force_multi - (scrollY * 1000.0f), MIN_FORCE_MULTI, MAX_FORCE_MULTI);
   for(auto& node : nodes) {
-    const float min_radius = 2.0f, max_radius = 16.0f;
-    node->radius = std::clamp(glm::abs(node->radius - (scrollY * 0.1f)), min_radius, max_radius);
-    FORCE_MULTI = std::clamp(FORCE_MULTI - scrollY, 10.0f, 5000.0f);
+    const float MIN_RADIUS = 2.0f, MAX_RADIUS = 16.0f;
+    node->radius = std::clamp(glm::abs(node->radius - (scrollY * 0.1f)), MIN_RADIUS, MAX_RADIUS);
   }
 }
 
