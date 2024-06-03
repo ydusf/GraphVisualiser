@@ -15,7 +15,7 @@ void ofApp::setup(){
   gui.add(force_multi_slider.setup("Force Multiplier", 500.0f, 1.0f, 3000.0f));
   gui.add(radius_slider.setup("Node Radius", 4.0f, 4.0f, 32.0f));
   gui.add(node_count_label.setup("Node Count", std::to_string(nodes.size())));
-  gui.add(link_count_label.setup("Node Count", std::to_string(links.size())));
+  gui.add(link_count_label.setup("Link Count", std::to_string(links.size())));
 }
 
 void ofApp::apply_forces() {
@@ -49,7 +49,7 @@ void ofApp::update(){
   force_multi = force_multi_slider;
   radius = radius_slider;
   node_count_label.setup("Node Count: ", std::to_string(nodes.size()));
-  link_count_label.setup("Node Count: ", std::to_string(links.size()));
+  link_count_label.setup("Link Count: ", std::to_string(links.size()));
   if(radius != prev_radius) {
     prev_radius = radius;
     for(auto& node : nodes) {
@@ -116,6 +116,16 @@ void ofApp::keyPressed(int key){
       if(nodes.size() < 1) break;
       nodes.clear();
       links.clear();
+      break;
+    case 'k':
+      for(std::size_t i = 0; i < 25; ++i) {
+        const auto& new_node = std::make_shared<Node>(
+          ofVec2f{
+            ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
+            ofRandom(-START_DIST_MULTI*ofGetHeight() , START_DIST_MULTI*ofGetHeight())
+          }, radius, "New Node" + std::to_string(i));
+        nodes.push_back(new_node);
+      }
       break;
   }
 } 

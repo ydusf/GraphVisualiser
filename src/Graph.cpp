@@ -1,6 +1,8 @@
 #include "ofApp.h"
 #include "Graph.h"
 
+#include <string>
+
 const ofVec2f INITIAL_VELOCITY = {1.0f, 1.0f};
 const float CELL_SIZE = 24.0f;
 
@@ -9,6 +11,9 @@ Node::Node(ofVec2f pos, float radius)
 
 Node::Node(ofVec2f pos, float radius, ofColor color)
   : pos(pos), vel(INITIAL_VELOCITY), radius(radius), color(color) {};
+
+Node::Node(ofVec2f pos, float radius, std::string label)
+  : pos(pos), vel(INITIAL_VELOCITY), radius(radius), label(label) {};
 
 bool Node::operator==(const std::shared_ptr<Node>& node) {
   return pos == pos && vel == vel;
@@ -27,6 +32,7 @@ void Node::draw() {
     pos,
     radius
   );
+  ofDrawBitmapString(label, pos.x - (label.length() * 4), pos.y-radius);
 };
   
 Node::~Node() {

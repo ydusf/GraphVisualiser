@@ -6,9 +6,11 @@ struct Node {
   ofVec2f pos, vel;
   float radius;
   ofColor color;
+  std::string label;
 
   Node(ofVec2f pos, float radius);
   Node(ofVec2f pos, float radius, ofColor color);
+  Node(ofVec2f pos, float radius, std::string label);
 
   bool operator==(const std::shared_ptr<Node>& node);
 
