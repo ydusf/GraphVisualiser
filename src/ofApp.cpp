@@ -50,6 +50,7 @@ void ofApp::update(){
   radius = radius_slider;
   node_count_label.setup("Node Count: ", std::to_string(nodes.size()));
   link_count_label.setup("Link Count: ", std::to_string(links.size()));
+  
   if(radius != prev_radius) {
     prev_radius = radius;
     for(auto& node : nodes) {
@@ -79,11 +80,11 @@ void ofApp::draw(){
 
   // graph draw
   ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
-  for (const auto& node : nodes) {
-    node->draw();
-  }
   for(const auto& link : links) {
     link->draw();
+  }
+  for (const auto& node : nodes) {
+    node->draw();
   }
 };
 
@@ -96,36 +97,30 @@ void ofApp::exit(){
 void ofApp::keyPressed(int key){
   switch (key) {
     case 'd':
-      for(std::size_t i = 0; i < 25; ++i) {
+      for(std::size_t i = 0; i < 400; ++i) {
         const auto& new_node = std::make_shared<Node>(
           ofVec2f{
             ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
             ofRandom(-START_DIST_MULTI*ofGetHeight() , START_DIST_MULTI*ofGetHeight())
-          }, radius, ofColor{147.0f,206.0f,195.0f});
+          }, radius, ofColor{52.0f, 152.0f, 219.0f}, std::to_string(i));
         nodes.push_back(new_node);
       }
-      break;
-    case 'l':
       for(std::size_t i = 0; i < nodes.size(); ++i) {
-        const int random_idx = static_cast<int>(ofRandom(0, nodes.size()));
-        if(i == random_idx) continue;
-        links.push_back(std::make_shared<Link>(nodes[i], nodes[random_idx]));
+        for(std::size_t j = 0; j < 3; ++j) {
+          
+          const int random_idx = static_cast<int>(ofRandom(0, nodes.size()));
+          if(i == random_idx) continue;
+          links.push_back(std::make_shared<Link>(
+            nodes[i], nodes[random_idx],
+            ofColor{44, 62, 80}
+          ));
+        }
       }
       break;
     case 'r':
       if(nodes.size() < 1) break;
       nodes.clear();
       links.clear();
-      break;
-    case 'k':
-      for(std::size_t i = 0; i < 25; ++i) {
-        const auto& new_node = std::make_shared<Node>(
-          ofVec2f{
-            ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
-            ofRandom(-START_DIST_MULTI*ofGetHeight() , START_DIST_MULTI*ofGetHeight())
-          }, radius, "New Node" + std::to_string(i));
-        nodes.push_back(new_node);
-      }
       break;
   }
 } 
@@ -144,6 +139,7 @@ void ofApp::mouseMoved(int x, int y ){
 void ofApp::mouseDragged(int x, int y, int button){
   mouse_position = {ofGetMouseX() - ofGetWidth() / 2.0f, ofGetMouseY() - ofGetHeight() / 2.0f};
 
+  // node still being dragged
   if(node_being_dragged != nullptr && node_being_dragged->pos.distance(mouse_position) < node_being_dragged->radius) return;
 
   for(const auto& node : nodes) {
@@ -169,7 +165,6 @@ void ofApp::mouseScrolled(int x, int y, float scrollX, float scrollY){
   // zoom functionality
   const float MIN_FORCE_MULTI = 200.0f, MAX_FORCE_MULTI = 2000.0f;
   scrollY = std::clamp(scrollY, -1.0f, 1.0f);
-  std::cout << scrollY << '\n';
   force_multi = std::clamp(force_multi - (scrollY * 1000.0f), MIN_FORCE_MULTI, MAX_FORCE_MULTI);
   for(auto& node : nodes) {
     const float MIN_RADIUS = 2.0f, MAX_RADIUS = 16.0f;
