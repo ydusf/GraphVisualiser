@@ -48,5 +48,4 @@ class ofApp : public ofBaseApp{
 	ofxFloatSlider radius_slider;
 	ofxLabel node_count_label;
 	ofxLabel link_count_label;
-	ofxVec2Slider vec2Slider;
 };

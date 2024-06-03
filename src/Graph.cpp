@@ -44,12 +44,8 @@ Node::~Node() {
 Link::Link(std::shared_ptr<Node> start, std::shared_ptr<Node> end)
   : start(start), end(end) {};
 
-Link::Link(std::shared_ptr<Node> start, std::shared_ptr<Node> end, float max_distance)
-  : start(start), end(end), max_distance(max_distance) {};
-
-
-Link::Link(std::shared_ptr<Node> start, std::shared_ptr<Node> end, float max_distance, ofColor color)
-  : start(start), end(end), color(color), max_distance(max_distance) {};
+Link::Link(std::shared_ptr<Node> start, std::shared_ptr<Node> end, ofColor color)
+  : start(start), end(end), color(color) {};
 
 void Link::update() {
   if(start.expired() || end.expired()) return;

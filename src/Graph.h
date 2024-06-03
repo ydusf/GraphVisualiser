@@ -27,7 +27,6 @@ struct Link {
   ofColor color;
 
   Link(std::shared_ptr<Node> start, std::shared_ptr<Node> end);
-  Link(std::shared_ptr<Node> start, std::shared_ptr<Node> end);
   Link(std::shared_ptr<Node> start, std::shared_ptr<Node> end, ofColor color);
 
   void update();
