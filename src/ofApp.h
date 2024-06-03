@@ -1,9 +1,13 @@
 #pragma once
 
 #include "ofMain.h"
+#include "Graph.h"
+#include "Grid.h"
 
 #include <vector>
+#include <memory>
 #include <tuple>
+#include <unordered_set>
 
 class ofApp : public ofBaseApp{
 
@@ -25,8 +29,15 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h) override;
 		void dragEvent(ofDragInfo dragInfo) override;
 		void gotMessage(ofMessage msg) override;
-		
-	std::vector<ofVec2f> nodes;
-	std::vector<std::tuple<ofVec2f, ofVec2f> > links;
-	const int radius = 8;
+		void apply_forces();
+	
+	ofVec2f mouse_position;
+	std::vector<std::shared_ptr<Node> > nodes;
+	std::vector<std::shared_ptr<Link> > links;
+	std::shared_ptr<Node> node_being_dragged;
+	Grid grid;
+
+	const float GRAVITY = 1.1;
+	float FORCE_MULTI = 1000;
+	float lerp_val = 0.2;
 };
