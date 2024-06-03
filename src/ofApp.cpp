@@ -16,6 +16,12 @@ void ofApp::setup(){
   gui.add(radius_slider.setup("Node Radius", 4.0f, 4.0f, 32.0f));
   gui.add(node_count_label.setup("Node Count", std::to_string(nodes.size())));
   gui.add(link_count_label.setup("Link Count", std::to_string(links.size())));
+  gui.add(node_color_label.setup("Node", "rgb(" + std::to_string(node_color.r) + ", " + std::to_string(node_color.g) + ", " + std::to_string(node_color.b) + ")"));
+  gui.add(node_color_slider.setup(node_color, 20, 20));
+  gui.add(link_color_label.setup("Link", "rgb(" + std::to_string(link_color.r) + ", " + std::to_string(link_color.g) + ", " + std::to_string(link_color.b) + ")"));
+  gui.add(link_color_slider.setup(link_color, 20, 20));
+  gui.add(label_color_label.setup("Label", "rgb(" + std::to_string(label_color.r) + ", " + std::to_string(label_color.g) + ", " + std::to_string(label_color.b) + ")"));
+  gui.add(label_color_slider.setup(label_color, 20, 20));
 }
 
 void ofApp::apply_forces() {
@@ -48,13 +54,33 @@ void ofApp::update(){
   ofSetWindowTitle("FPS: " + std::to_string(ofGetFrameRate()) + " | Nodes: " + std::to_string(nodes.size()) + " | Links: " + std::to_string(links.size()));
   force_multi = force_multi_slider;
   radius = radius_slider;
-  node_count_label.setup("Node Count: ", std::to_string(nodes.size()));
-  link_count_label.setup("Link Count: ", std::to_string(links.size()));
+  node_color = node_color_slider;
+  link_color = link_color_slider;
+  label_color = label_color_slider;
+  node_count_label.setup("Node Count", std::to_string(nodes.size()));
+  link_count_label.setup("Link Count", std::to_string(links.size()));
+  node_color_label.setup("Node", "rgb(" + std::to_string(node_color.r) + ", " + std::to_string(node_color.g) + ", " + std::to_string(node_color.b) + ")");
+  link_color_label.setup("Link", "rgb(" + std::to_string(link_color.r) + ", " + std::to_string(link_color.g) + ", " + std::to_string(link_color.b) + ")");
+  label_color_label.setup("Label", "rgb(" + std::to_string(label_color.r) + ", " + std::to_string(label_color.g) + ", " + std::to_string(label_color.b) + ")");
   
   if(radius != prev_radius) {
     prev_radius = radius;
-    for(auto& node : nodes) {
+    for(const auto& node : nodes) {
       node->radius = radius;
+    }
+  }
+  if(prev_node_color != node_color || prev_label_color != label_color) {
+    prev_node_color = node_color;
+    prev_label_color = label_color;
+    for(const auto& node : nodes) {
+      node->node_color = node_color;
+      node->label_color = label_color;
+    }
+  }
+  if(prev_link_color != link_color) {
+    prev_link_color = link_color;
+    for(const auto& link : links) {
+      link->color = link_color;
     }
   }
 
@@ -78,7 +104,7 @@ void ofApp::draw(){
   // gui draw
   gui.draw();
 
-  // graph draw
+  // graph draw (links first so nodes are above)
   ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
   for(const auto& link : links) {
     link->draw();

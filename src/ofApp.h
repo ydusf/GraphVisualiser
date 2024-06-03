@@ -40,12 +40,28 @@ class ofApp : public ofBaseApp{
 	const float START_DIST_MULTI = 1.0f;
 	float force_multi = 1000.0f;
 	float lerp_val = 0.2f;
+
 	float radius = 4.0f;
 	float prev_radius = radius;
+	ofColor node_color;
+	ofColor prev_node_color = node_color;
+	ofColor link_color;
+	ofColor prev_link_color = link_color;
+	ofColor label_color;
+	ofColor prev_label_color = label_color;
+
 
 	ofxPanel gui;
+
 	ofxFloatSlider force_multi_slider;
 	ofxFloatSlider radius_slider;
+	ofxColorSlider node_color_slider;
+	ofxColorSlider link_color_slider;
+	ofxColorSlider label_color_slider;
+
 	ofxLabel node_count_label;
 	ofxLabel link_count_label;
+	ofxLabel node_color_label;
+	ofxLabel link_color_label;
+	ofxLabel label_color_label;
 };

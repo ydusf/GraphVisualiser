@@ -5,7 +5,8 @@
 struct Node {
   ofVec2f pos, vel;
   float radius;
-  ofColor color;
+  ofColor node_color;
+  ofColor label_color;
   std::string label;
 
   Node(ofVec2f pos, float radius);

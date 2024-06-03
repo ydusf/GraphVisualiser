@@ -10,10 +10,10 @@ Node::Node(ofVec2f pos, float radius)
   : pos(pos), vel(INITIAL_VELOCITY), radius(radius) {};
 
 Node::Node(ofVec2f pos, float radius, ofColor color)
-  : pos(pos), vel(INITIAL_VELOCITY), radius(radius), color(color) {};
+  : pos(pos), vel(INITIAL_VELOCITY), radius(radius), node_color(color) {};
 
 Node::Node(ofVec2f pos, float radius, ofColor color, std::string label)
-  : pos(pos), vel(INITIAL_VELOCITY), radius(radius), color(color), label(label) {};
+  : pos(pos), vel(INITIAL_VELOCITY), radius(radius), node_color(color), label(label) {};
 
 bool Node::operator==(const std::shared_ptr<Node>& node) {
   return pos == pos && vel == vel;
@@ -25,13 +25,13 @@ void Node::update() {
 
 void Node::draw() {
   // draw nodes
-  ofSetColor(color);
+  ofSetColor(node_color);
   ofDrawCircle(
     pos,
     radius
   );
-  // draw text
-  ofSetColor(ofColor{241.0f, 196.0f, 15.0f});
+  // draw labels
+  ofSetColor(label_color);
   const int LABEL_OFFSET_X = (label.length() * SIZE_OF_CHAR) / 2;
   const int LABEL_OFFSET_Y = radius * 1.5;
   ofDrawBitmapString(label, pos.x - LABEL_OFFSET_X, pos.y-LABEL_OFFSET_Y);
@@ -53,7 +53,7 @@ void Link::update() {
 
 void Link::draw() {
   if(start.expired() || end.expired()) return; // link validity check
-  ofSetColor(color, 255.0f);
+  ofSetColor(color);
   ofDrawLine(start.lock()->pos, end.lock()->pos);
 };
 
