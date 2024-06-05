@@ -1,4 +1,3 @@
-#include "ofApp.h"
 #include "Graph.h"
 
 #include <string>

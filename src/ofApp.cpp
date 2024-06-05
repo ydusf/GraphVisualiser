@@ -103,7 +103,7 @@ void ofApp::update(){
 void ofApp::draw(){  
   gui.draw();
 
-  // centre visualisation
+  // centralise visualisation
   ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
 
   // graph draw (links first so nodes are above)
@@ -133,15 +133,13 @@ void ofApp::keyPressed(int key){
         nodes.push_back(new_node);
       }
       for(std::size_t i = 0; i < nodes.size(); ++i) {
-        for(std::size_t j = 0; j < 3; ++j) {
-          
-          const int random_idx = static_cast<int>(ofRandom(0, nodes.size()));
-          if(i == random_idx) continue;
-          links.push_back(std::make_shared<Link>(
-            nodes[i], nodes[random_idx],
-            ofColor{44, 62, 80}
-          ));
-        }
+        if(ofRandom(0, 1) > 0.5f) continue;
+        const int random_idx = static_cast<int>(ofRandom(0, nodes.size()));
+        if(i == random_idx) continue;
+        links.push_back(std::make_shared<Link>(
+          nodes[i], nodes[random_idx],
+          ofColor{44, 62, 80}
+        ));
       }
       break;
     case 'r':
@@ -190,10 +188,10 @@ void ofApp::drag() {
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
+  update_mouse_position();
+
   // node still being dragged
   if(node_being_dragged != nullptr) return;
-
-  update_mouse_position();
 
   // node must be selected -> check which one;
   if(!panning) find_node_being_dragged();
@@ -251,3 +249,10 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
 }
 
+// FPS : NODES : LINKS
+// 51 : 1200 : 2397
+// 63 : 800 : 2397
+// 42 : 800 : 5990
+// 81 : 800 : 583
+// 51 : 1200 : 1191
+// 36 : 1600 : 2014
