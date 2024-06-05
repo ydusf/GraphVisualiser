@@ -29,15 +29,24 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h) override;
 		void dragEvent(ofDragInfo dragInfo) override;
 		void gotMessage(ofMessage msg) override;
+		void update_gui();
 		void apply_forces();
+		void update_mouse_position();
+		void pan();
+		void find_node_being_dragged();
+		void drag();
 	
 	ofVec2f mouse_position;
+	ofVec2f prev_mouse_position;
+	bool panning = false;
 	std::vector<std::shared_ptr<Node> > nodes;
 	std::vector<std::shared_ptr<Link> > links;
 	std::shared_ptr<Node> node_being_dragged;
 
 	const float GRAVITY = 1.1f;
 	const float START_DIST_MULTI = 1.0f;
+	const float MIN_RADIUS = 2.0f, MAX_RADIUS = 32.0f;
+	const float MIN_FORCE_MULTI = 200.0f, MAX_FORCE_MULTI = 2000.0f;
 	float force_multi = 1000.0f;
 	float lerp_val = 0.2f;
 
