@@ -15,6 +15,8 @@ struct Node {
 
   bool operator==(const std::shared_ptr<Node>& node);
 
+  bool within_bounds();
+
   void update();
   void draw();
   

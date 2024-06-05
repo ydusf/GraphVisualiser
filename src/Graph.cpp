@@ -19,12 +19,19 @@ bool Node::operator==(const std::shared_ptr<Node>& node) {
   return pos == pos && vel == vel;
 };
 
+bool Node::within_bounds() {
+  const ofVec2f bounds = {ofGetWidth() / 2.0f, ofGetHeight()/2.0f};
+  return (pos.x+radius) > -bounds.x && (pos.x-radius) < bounds.x && (pos.y+radius) > -bounds.y && (pos.y-radius) < bounds.y;
+};
+
+
 void Node::update() {
   pos += vel * ofGetLastFrameTime();
 };
 
 void Node::draw() {
   // draw nodes
+  if(!within_bounds()) return;
   ofSetColor(node_color);
   ofDrawCircle(
     pos,
