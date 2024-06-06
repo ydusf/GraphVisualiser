@@ -11,32 +11,37 @@ void ofApp::setup(){
   ofSetFrameRate(0);
   ofSetVerticalSync(0);
 
+  create_gui();
+}
+
+void ofApp::create_gui() {
   gui.setup();
   gui.add(force_multi_slider.setup("Force Multiplier", 500.0f, MIN_FORCE_MULTI, MAX_FORCE_MULTI));
   gui.add(radius_slider.setup("Node Radius", 4.0f, MIN_RADIUS, MAX_RADIUS));
-  gui.add(node_count_label.setup("Node Count", std::to_string(nodes.size())));
-  gui.add(link_count_label.setup("Link Count", std::to_string(links.size())));
-  gui.add(node_color_label.setup("Node", "rgb(" + std::to_string(node_color.r) + ", " + std::to_string(node_color.g) + ", " + std::to_string(node_color.b) + ")"));
-  gui.add(node_color_slider.setup(node_color, 20, 20));
-  gui.add(link_color_label.setup("Link", "rgb(" + std::to_string(link_color.r) + ", " + std::to_string(link_color.g) + ", " + std::to_string(link_color.b) + ")"));
-  gui.add(link_color_slider.setup(link_color, 20, 20));
-  gui.add(label_color_label.setup("Label", "rgb(" + std::to_string(label_color.r) + ", " + std::to_string(label_color.g) + ", " + std::to_string(label_color.b) + ")"));
-  gui.add(label_color_slider.setup(label_color, 20, 20));
+  add_color_slider(gui, node_color, "Node", node_color_label, node_color_slider);
+  add_color_slider(gui, link_color, "Link", link_color_label, link_color_slider);
+  add_color_slider(gui, label_color, "Label", label_color_label, label_color_slider);
+}
+
+void ofApp::add_color_slider(ofxPanel& gui, ofColor& color, const std::string& label, ofxLabel& color_label, ofxColorSlider& color_slider) {
+  color_label.setup(label, "rgb(" + std::to_string(color.r) + ", " + std::to_string(color.g) + ", " + std::to_string(color.b) + ")");
+  gui.add(color_slider.setup(color, 20, 20));
 }
 
 void ofApp::update_gui() {
-  ofSetWindowTitle("FPS: " + std::to_string(ofGetFrameRate()) + " | Nodes: " + std::to_string(nodes.size()) + " | Links: " + std::to_string(links.size()));
+  std::size_t link_num = 0;
+  for(const auto& node : nodes) {
+    for(const auto& neighbour_idx : node->neighbours) {
+      link_num++;
+    }
+  } 
+  ofSetWindowTitle("FPS: " + std::to_string(ofGetFrameRate()) + " | Nodes: " + std::to_string(nodes.size()) + " | Links: " + std::to_string(link_num));
   force_multi = force_multi_slider;
   radius = radius_slider;
-  node_color = node_color_slider;
-  link_color = link_color_slider;
-  label_color = label_color_slider;
-  node_count_label.setup("Node Count", std::to_string(nodes.size()));
-  link_count_label.setup("Link Count", std::to_string(links.size()));
-  node_color_label.setup("Node", "rgb(" + std::to_string(node_color.r) + ", " + std::to_string(node_color.g) + ", " + std::to_string(node_color.b) + ")");
-  link_color_label.setup("Link", "rgb(" + std::to_string(link_color.r) + ", " + std::to_string(link_color.g) + ", " + std::to_string(link_color.b) + ")");
-  label_color_label.setup("Label", "rgb(" + std::to_string(label_color.r) + ", " + std::to_string(label_color.g) + ", " + std::to_string(label_color.b) + ")");
-  
+  update_color(node_color, node_color_slider, node_color_label);
+  update_color(link_color, link_color_slider, link_color_label);
+  update_color(label_color, label_color_slider, label_color_label);
+
   if(radius != prev_radius) {
     prev_radius = radius;
     for(const auto& node : nodes) {
@@ -51,35 +56,34 @@ void ofApp::update_gui() {
       node->label_color = label_color;
     }
   }
-  if(prev_link_color != link_color) {
-    prev_link_color = link_color;
-    for(const auto& link : links) {
-      link->color = link_color;
-    }
-  }
 }
 
-void ofApp::apply_forces() {
-  // gravity
-  for (auto& node : nodes) {
-    node->vel = node->pos * -1 * GRAVITY;
-  }
+void ofApp::update_color(ofColor& color, ofxColorSlider& color_slider, ofxLabel& color_label) {
+  color = color_slider;
+  color_label.setup("rgb(" + std::to_string(color.r) + ", " + std::to_string(color.g) + ", " + std::to_string(color.b) + ")");
+}
 
-  // node-node repulsion
-  for(auto& curr_node : nodes) {
-    for(auto& next_node : nodes) {
+void ofApp::apply_force_directed_layout() {
+
+  for(const auto& curr_node : nodes) {
+    // gravity
+    curr_node->vel = curr_node->pos * -1 * GRAVITY;
+    for(const auto& next_node : nodes) {
+      // node-node repulsion
       const ofVec2f dir = next_node->pos - curr_node->pos;
       const ofVec2f force = dir / (dir.lengthSquared()) * force_multi;
       curr_node->vel -= force;
-      next_node->vel += force;
+      next_node->vel += force; 
     }
   }
 
   // link forces
-  for (const auto& link : links) {
-    const ofVec2f dis = link->start.lock()->pos - link->end.lock()->pos;
-    link->start.lock()->vel -= dis;
-    link->end.lock()->vel += dis;
+  for(const auto& node : nodes) {
+    for(const auto& neighbour : node->neighbours) {
+      const ofVec2f dis = node->pos - neighbour->pos;
+      node->vel -= dis;
+      neighbour->vel += dis;
+    }
   }
 }
 
@@ -88,15 +92,14 @@ void ofApp::update(){
   update_gui();  
 
   // graph updates
-  apply_forces();
+  apply_force_directed_layout();
   for (const auto& node : nodes) {
     node->update();
   }
-  for(const auto& link : links) {
-    link->update();
-  }
 
-  drag();
+  // user interaction
+  if(node_being_dragged) drag();
+  if(panning) pan();
 }
 
 //--------------------------------------------------------------
@@ -106,11 +109,9 @@ void ofApp::draw(){
   // centralise visualisation
   ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
 
-  // graph draw (links first so nodes are above)
-  for(const auto& link : links) {
-    link->draw();
-  }
-  for (const auto& node : nodes) {
+  for(const auto& node : nodes) {
+    ofSetColor(link_color);
+    node->draw_links();
     node->draw();
   }
 };
@@ -124,31 +125,33 @@ void ofApp::exit(){
 void ofApp::keyPressed(int key){
   switch (key) {
     case 'd':
-      for(std::size_t i = 0; i < 400; ++i) {
-        const auto& new_node = std::make_shared<Node>(
-          ofVec2f{
-            ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
-            ofRandom(-START_DIST_MULTI*ofGetHeight() , START_DIST_MULTI*ofGetHeight())
-          }, radius, ofColor{52.0f, 152.0f, 219.0f}, std::to_string(i));
-        nodes.push_back(new_node);
-      }
-      for(std::size_t i = 0; i < nodes.size(); ++i) {
-        if(ofRandom(0, 1) > 0.5f) continue;
-        const int random_idx = static_cast<int>(ofRandom(0, nodes.size()));
-        if(i == random_idx) continue;
-        links.push_back(std::make_shared<Link>(
-          nodes[i], nodes[random_idx],
-          ofColor{44, 62, 80}
-        ));
-      }
+      create_nodes_and_links();
       break;
     case 'r':
       if(nodes.size() < 1) break;
       nodes.clear();
-      links.clear();
       break;
   }
-} 
+}
+
+void ofApp::create_nodes_and_links() {
+  for(std::size_t i = 0; i < 400; ++i) {
+    const auto& new_node = std::make_shared<Node>(
+      i,
+      ofVec2f{
+        ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
+        ofRandom(-START_DIST_MULTI*ofGetHeight() , START_DIST_MULTI*ofGetHeight())
+      }, radius, ofColor{52.0f, 152.0f, 219.0f}, std::to_string(i));
+    nodes.push_back(new_node);
+  }
+  for(std::size_t i = 0; i < nodes.size(); ++i) {
+    for(std::size_t j = 0; j < 3; ++j) {
+      const std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
+      if(i == random_idx) continue;
+      nodes[i]->neighbours.push_back(nodes[random_idx]);
+    }
+  }
+};
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
@@ -156,6 +159,7 @@ void ofApp::keyReleased(int key){
 }
 
 void ofApp::update_mouse_position() {
+  prev_mouse_position = mouse_position;
   mouse_position = {ofGetMouseX() - ofGetWidth() / 2.0f, ofGetMouseY() - ofGetHeight() / 2.0f};
 }
 
@@ -165,14 +169,15 @@ void ofApp::mouseMoved(int x, int y ){
 }
 
 void ofApp::pan() {
+  update_mouse_position();
   const ofVec2f PAN_OFFSET =  mouse_position - prev_mouse_position;
   for(const auto& node : nodes) {
     node->pos += PAN_OFFSET;
   };
-  prev_mouse_position = mouse_position;
 }
 
 void ofApp::find_node_being_dragged() {
+  update_mouse_position();
   for(const auto& node : nodes) {
     if(node->pos.distance(mouse_position) >= node->radius) continue;
     node_being_dragged = node;
@@ -181,31 +186,23 @@ void ofApp::find_node_being_dragged() {
 }
 
 void ofApp::drag() {
-  if(node_being_dragged == nullptr) return;
+  update_mouse_position();
   node_being_dragged->pos.interpolate(mouse_position, lerp_val);
   if(lerp_val < 0.95) lerp_val += 0.02;
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-  update_mouse_position();
-
-  // node still being dragged
-  if(node_being_dragged != nullptr) return;
-
-  // node must be selected -> check which one;
-  if(!panning) find_node_being_dragged();
-
-  // must be panning
-  panning = true;
-  pan();
 }
 
 //--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-  // ensures position of nodes does not skip to current mouse position
-  update_mouse_position();
-  prev_mouse_position = mouse_position;
+void ofApp::mousePressed(int x, int y, int button){  
+  if(node_being_dragged) return;
+
+  find_node_being_dragged();
+
+  // node not found so must be panning
+  if(!node_being_dragged) panning = true;
 }
 
 //--------------------------------------------------------------
@@ -248,11 +245,3 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
 }
-
-// FPS : NODES : LINKS
-// 51 : 1200 : 2397
-// 63 : 800 : 2397
-// 42 : 800 : 5990
-// 81 : 800 : 583
-// 51 : 1200 : 1191
-// 36 : 1600 : 2014

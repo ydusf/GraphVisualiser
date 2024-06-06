@@ -16,7 +16,7 @@ OF_ROOT = ../../..
 #       (default) PROJECT_ROOT = . (this directory)
 #    
 ################################################################################
-# PROJECT_ROOT = .
+PROJECT_ROOT = .
 
 ################################################################################
 # PROJECT SPECIFIC CHECKS
@@ -33,11 +33,12 @@ OF_ROOT = ../../..
 #   Like source folders in the PROJECT_ROOT, these paths are subject to 
 #   exlclusion via the PROJECT_EXLCUSIONS list.
 #
-#     (default) PROJECT_EXTERNAL_SOURCE_PATHS = (blank) 
+#     (default) PROJECT_EXTERNAL_SOURCE_PATHS = (blank)
+
 #
 #   Note: Leave a leading space when adding list items with the += operator
 ################################################################################
-# PROJECT_EXTERNAL_SOURCE_PATHS = 
+PROJECT_EXTERNAL_SOURCE_PATHS = 
 
 ################################################################################
 # PROJECT EXCLUSIONS
@@ -61,7 +62,7 @@ OF_ROOT = ../../..
 #
 #   Note: Leave a leading space when adding list items with the += operator
 ################################################################################
-# PROJECT_EXCLUSIONS =
+PROJECT_EXCLUSIONS =
 
 ################################################################################
 # PROJECT LINKER FLAGS
@@ -105,7 +106,7 @@ OF_ROOT = ../../..
 #
 #   Note: Leave a leading space when adding list items with the += operator
 ################################################################################
-# PROJECT_CFLAGS = 
+PROJECT_CFLAGS =
 
 ################################################################################
 # PROJECT OPTIMIZATION CFLAGS
@@ -128,8 +129,8 @@ OF_ROOT = ../../..
 #
 #   Note: Leave a leading space when adding list items with the += operator
 ################################################################################
-# PROJECT_OPTIMIZATION_CFLAGS_RELEASE = 
-# PROJECT_OPTIMIZATION_CFLAGS_DEBUG = 
+PROJECT_OPTIMIZATION_CFLAGS_RELEASE = -O3 -flto -march=native -ftree-vectorize -funroll-loops -fomit-frame-pointer
+PROJECT_OPTIMIZATION_CFLAGS_DEBUG = -O0 -g
 
 ################################################################################
 # PROJECT COMPILERS

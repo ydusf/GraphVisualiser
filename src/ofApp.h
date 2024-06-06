@@ -7,7 +7,6 @@
 #include <vector>
 #include <memory>
 #include <tuple>
-#include <unordered_set>
 
 class ofApp : public ofBaseApp{
 
@@ -29,24 +28,34 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h) override;
 		void dragEvent(ofDragInfo dragInfo) override;
 		void gotMessage(ofMessage msg) override;
+
+		void create_gui();
+		void add_color_slider(ofxPanel& gui, ofColor& color, const std::string& label, ofxLabel& color_label, ofxColorSlider& color_slider);
 		void update_gui();
-		void apply_forces();
+		void update_color(ofColor& color, ofxColorSlider& color_slider, ofxLabel& color_label);
+
+		void apply_force_directed_layout();
+		
 		void update_mouse_position();
-		void pan();
 		void find_node_being_dragged();
 		void drag();
+		void pan();
+
+		void create_nodes_and_links();
 
 	ofVec2f mouse_position;
 	ofVec2f prev_mouse_position;
 	bool panning = false;
+
 	std::vector<std::shared_ptr<Node> > nodes;
-	std::vector<std::shared_ptr<Link> > links;
+	std::vector<std::tuple<int, int> > links;
+	std::vector<std::vector<bool > > adjacency_matrix;
 	std::shared_ptr<Node> node_being_dragged;
 
 	const float GRAVITY = 1.1f;
 	const float START_DIST_MULTI = 1.0f;
 	const float MIN_RADIUS = 2.0f, MAX_RADIUS = 32.0f;
-	const float MIN_FORCE_MULTI = 50.0f, MAX_FORCE_MULTI = 3000.0f;
+	const float MIN_FORCE_MULTI = 50.0f, MAX_FORCE_MULTI = 5000.0f;
 	float force_multi = 1000.0f;
 	float lerp_val = 0.2f;
 
@@ -54,11 +63,9 @@ class ofApp : public ofBaseApp{
 	float prev_radius = radius;
 	ofColor node_color;
 	ofColor prev_node_color = node_color;
-	ofColor link_color;
-	ofColor prev_link_color = link_color;
+	ofColor link_color = {255.0f, 255.0f, 255.0f, 65.0f};
 	ofColor label_color;
 	ofColor prev_label_color = label_color;
-
 
 	ofxPanel gui;
 

@@ -2,16 +2,23 @@
 
 #include "ofMain.h"
 
+#include <cstddef>
+#include <tuple>
+#include <memory>
+#include <string>
+
 struct Node {
+  std::size_t id;
   ofVec2f pos, vel;
   float radius;
   ofColor node_color;
   ofColor label_color;
   std::string label;
+  std::vector<std::shared_ptr<Node> > neighbours;
 
-  Node(ofVec2f pos, float radius);
-  Node(ofVec2f pos, float radius, ofColor color);
-  Node(ofVec2f pos, float radius, ofColor color, std::string label);
+  Node(std::size_t id, ofVec2f pos, float radius);
+  Node(std::size_t id, ofVec2f pos, float radius, ofColor color);
+  Node(std::size_t id, ofVec2f pos, float radius, ofColor color, std::string label);
 
   bool operator==(const std::shared_ptr<Node>& node);
 
@@ -19,21 +26,7 @@ struct Node {
 
   void update();
   void draw();
+  void draw_links();
   
   ~Node();
-};
-
-struct Link {
-  std::weak_ptr<Node> start;
-  std::weak_ptr<Node> end;
-  float width;
-  ofColor color;
-
-  Link(std::shared_ptr<Node> start, std::shared_ptr<Node> end);
-  Link(std::shared_ptr<Node> start, std::shared_ptr<Node> end, ofColor color);
-
-  void update();
-  void draw();
-
-  ~Link();
 };
