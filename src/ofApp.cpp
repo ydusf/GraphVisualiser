@@ -10,8 +10,32 @@ void ofApp::setup(){
   ofEnableSmoothing();
   ofSetFrameRate(0);
   ofSetVerticalSync(0);
+  line_mesh.setMode(OF_PRIMITIVE_LINES);
+  line_mesh.enableColors();
 
   create_gui();
+}
+
+ofVboMesh ofApp::create_circle(const std::shared_ptr<Node>& node, std::size_t resolution) {
+  ofVboMesh mesh;
+  mesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
+  const float ANGLE_INCREMENT = TWO_PI / resolution;
+  const ofVec3f CENTRE = ofVec3f{node->pos.x, node->pos.y, 0.0f};
+  mesh.addVertex(CENTRE);
+
+  for (std::size_t i = 0; i <= resolution+1; ++i) {
+    const float ANGLE = i * ANGLE_INCREMENT;
+    const float vx = CENTRE.x + node->radius * cos(ANGLE);
+    const float vy = CENTRE.y + node->radius * sin(ANGLE);
+    mesh.addVertex(ofVec3f{vx, vy, 0.0f});
+  }
+
+  return mesh;
+}
+
+void ofApp::create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
+  mesh.addVertex(ofVec3f(node1->pos.x, node1->pos.y, 0));
+  mesh.addVertex(ofVec3f(node2->pos.x, node2->pos.y, 0));
 }
 
 void ofApp::create_gui() {
@@ -29,13 +53,7 @@ void ofApp::add_color_slider(ofxPanel& gui, ofColor& color, const std::string& l
 }
 
 void ofApp::update_gui() {
-  std::size_t link_num = 0;
-  for(const auto& node : nodes) {
-    for(const auto& neighbour_idx : node->neighbours) {
-      link_num++;
-    }
-  } 
-  ofSetWindowTitle("FPS: " + std::to_string(ofGetFrameRate()) + " | Nodes: " + std::to_string(nodes.size()) + " | Links: " + std::to_string(link_num));
+  ofSetWindowTitle("FPS: " + std::to_string(ofGetFrameRate()) + " | Nodes: " + std::to_string(nodes.size()) + " | Links: " + std::to_string(link_count));
   force_multi = force_multi_slider;
   radius = radius_slider;
   update_color(node_color, node_color_slider, node_color_label);
@@ -64,7 +82,6 @@ void ofApp::update_color(ofColor& color, ofxColorSlider& color_slider, ofxLabel&
 }
 
 void ofApp::apply_force_directed_layout() {
-
   for(const auto& curr_node : nodes) {
     // gravity
     curr_node->vel = curr_node->pos * -1 * GRAVITY;
@@ -109,10 +126,27 @@ void ofApp::draw(){
   // centralise visualisation
   ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
 
+  // clear graph
+  circle_meshes.clear();
+  line_mesh.clear();
+
+  // generate graph
   for(const auto& node : nodes) {
-    ofSetColor(link_color);
-    node->draw_links();
-    node->draw();
+    for(const auto& next_node : node->neighbours) {
+      create_line(line_mesh, node, next_node);
+    }
+    if(!node->within_bounds()) continue;
+    circle_meshes.push_back(create_circle(node, 30));
+    node->draw_label();
+  }
+
+  // display graph
+  ofSetColor(link_color);
+  line_mesh.draw();
+  ofSetColor(node_color);
+  // needs optimisation to combine all circles into one mesh (can't seem to create disconnected circles)
+  for(const auto& mesh : circle_meshes) {
+    mesh.draw();
   }
 };
 
@@ -135,7 +169,7 @@ void ofApp::keyPressed(int key){
 }
 
 void ofApp::create_nodes_and_links() {
-  for(std::size_t i = 0; i < 400; ++i) {
+  for(std::size_t i = 0; i < 500; ++i) {
     const auto& new_node = std::make_shared<Node>(
       i,
       ofVec2f{
@@ -145,10 +179,11 @@ void ofApp::create_nodes_and_links() {
     nodes.push_back(new_node);
   }
   for(std::size_t i = 0; i < nodes.size(); ++i) {
-    for(std::size_t j = 0; j < 3; ++j) {
+    for(std::size_t j = 0; j < 1; ++j) {
       const std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
       if(i == random_idx) continue;
       nodes[i]->neighbours.push_back(nodes[random_idx]);
+      link_count++;
     }
   }
 };
@@ -196,13 +231,38 @@ void ofApp::mouseDragged(int x, int y, int button){
 }
 
 //--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){  
-  if(node_being_dragged) return;
+void ofApp::mousePressed(int x, int y, int button){
+  update_mouse_position();
 
-  find_node_being_dragged();
+  if(button == OF_MOUSE_BUTTON_LEFT) {
+    if(node_being_dragged) return;
 
-  // node not found so must be panning
-  if(!node_being_dragged) panning = true;
+    find_node_being_dragged();
+
+    // node not found so must be panning
+    if(!node_being_dragged) panning = true;
+  }
+
+  if(button == OF_MOUSE_BUTTON_RIGHT) {
+    float min_dist = mouse_position.distance(nodes[0]->pos);
+    std::size_t closest_node = 0;
+
+    for(std::size_t i = 1; i < nodes.size(); ++i) {
+      const float new_dist = mouse_position.distance(nodes[i]->pos);
+      if(new_dist < min_dist) {
+        min_dist = new_dist;
+        closest_node = i;
+      }
+    } 
+
+    const auto& new_node = std::make_shared<Node>(
+      nodes.size(), ofVec2f{mouse_position}, radius,
+      ofColor{52.0f, 152.0f, 219.0f}, std::to_string(nodes.size())
+    );
+    nodes.push_back(new_node);
+    if(nodes.size() < 2) return;
+    new_node->neighbours.push_back(nodes[closest_node]);
+  }
 }
 
 //--------------------------------------------------------------

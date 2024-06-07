@@ -25,8 +25,7 @@ struct Node {
   bool within_bounds();
 
   void update();
-  void draw();
-  void draw_links();
+  void draw_label();
   
   ~Node();
 };

@@ -31,25 +31,11 @@ void Node::update() {
   pos += vel * ofGetLastFrameTime();
 };
 
-void Node::draw() {
-  // draw nodes
-  if(!within_bounds()) return;
-  ofSetColor(node_color);
-  ofDrawCircle(
-    pos,
-    radius
-  );
-  // draw labels
+void Node::draw_label() {
   ofSetColor(label_color);
   const int LABEL_OFFSET_X = (label.length() * SIZE_OF_CHAR) / 2;
   const int LABEL_OFFSET_Y = radius * 1.5;
   ofDrawBitmapString(label, pos.x - LABEL_OFFSET_X, pos.y-LABEL_OFFSET_Y);
-};
-
-void Node::draw_links() {
-  for(const auto& neighbour : neighbours) {
-    ofDrawLine(pos, neighbour->pos);
-  } 
 };
   
 Node::~Node() {};

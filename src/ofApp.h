@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <tuple>
+#include <cstddef>
 
 class ofApp : public ofBaseApp{
 
@@ -43,41 +44,51 @@ class ofApp : public ofBaseApp{
 
 		void create_nodes_and_links();
 
-	ofVec2f mouse_position;
-	ofVec2f prev_mouse_position;
-	bool panning = false;
+		ofVboMesh create_circle(const std::shared_ptr<Node>& node, std::size_t resolution);
+		void create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2);
 
-	std::vector<std::shared_ptr<Node> > nodes;
-	std::vector<std::tuple<int, int> > links;
-	std::vector<std::vector<bool > > adjacency_matrix;
-	std::shared_ptr<Node> node_being_dragged;
+	private:
+		ofVec2f mouse_position;
+		ofVec2f prev_mouse_position;
+		bool panning = false;
 
-	const float GRAVITY = 1.1f;
-	const float START_DIST_MULTI = 1.0f;
-	const float MIN_RADIUS = 2.0f, MAX_RADIUS = 32.0f;
-	const float MIN_FORCE_MULTI = 50.0f, MAX_FORCE_MULTI = 5000.0f;
-	float force_multi = 1000.0f;
-	float lerp_val = 0.2f;
+		std::vector<std::shared_ptr<Node> > nodes;
+		std::vector<std::tuple<int, int> > links;
+		std::vector<std::vector<bool > > adjacency_matrix;
+		std::shared_ptr<Node> node_being_dragged;
 
-	float radius = 4.0f;
-	float prev_radius = radius;
-	ofColor node_color;
-	ofColor prev_node_color = node_color;
-	ofColor link_color = {255.0f, 255.0f, 255.0f, 65.0f};
-	ofColor label_color;
-	ofColor prev_label_color = label_color;
+		const float GRAVITY = 1.1f;
+		const float START_DIST_MULTI = 1.0f;
+		const float MIN_RADIUS = 2.0f, MAX_RADIUS = 32.0f;
+		const float MIN_FORCE_MULTI = 50.0f, MAX_FORCE_MULTI = 5000.0f;
+		float force_multi = 1000.0f;
+		float lerp_val = 0.2f;
 
-	ofxPanel gui;
+		float radius = 4.0f;
+		float prev_radius = radius;
+		std::size_t link_count = 0;
 
-	ofxFloatSlider force_multi_slider;
-	ofxFloatSlider radius_slider;
-	ofxColorSlider node_color_slider;
-	ofxColorSlider link_color_slider;
-	ofxColorSlider label_color_slider;
+		ofxPanel gui;
 
-	ofxLabel node_count_label;
-	ofxLabel link_count_label;
-	ofxLabel node_color_label;
-	ofxLabel link_color_label;
-	ofxLabel label_color_label;
+		ofxFloatSlider force_multi_slider;
+		ofxFloatSlider radius_slider;
+		ofxColorSlider node_color_slider;
+		ofxColorSlider link_color_slider;
+		ofxColorSlider label_color_slider;
+
+		ofxLabel node_count_label;
+		ofxLabel link_count_label;
+		ofxLabel node_color_label;
+		ofxLabel link_color_label;
+		ofxLabel label_color_label;
+
+		ofColor node_color;
+		ofColor prev_node_color = node_color;
+		ofColor link_color = {255.0f, 255.0f, 255.0f, 65.0f};
+		ofColor label_color;
+		ofColor prev_label_color = label_color;
+
+		// ofVboMesh circle_mesh;
+		std::vector<ofVboMesh> circle_meshes;
+		ofVboMesh line_mesh;
 };
