@@ -44,12 +44,13 @@ class ofApp : public ofBaseApp{
 
 		void create_nodes_and_links();
 
-		ofVboMesh create_circle(const std::shared_ptr<Node>& node, std::size_t resolution);
+		void create_circle(ofVboMesh &mesh, const std::shared_ptr<Node>& node, std::size_t resolution);
 		void create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2);
 
 	private:
 		ofVec2f mouse_position;
 		ofVec2f prev_mouse_position;
+		std::size_t prev_node_count;
 		bool panning = false;
 
 		std::vector<std::shared_ptr<Node> > nodes;
@@ -88,7 +89,6 @@ class ofApp : public ofBaseApp{
 		ofColor label_color;
 		ofColor prev_label_color = label_color;
 
-		// ofVboMesh circle_mesh;
-		std::vector<ofVboMesh> circle_meshes;
+		ofVboMesh circle_mesh;
 		ofVboMesh line_mesh;
 };

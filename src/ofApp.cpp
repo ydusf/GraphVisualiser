@@ -12,28 +12,38 @@ void ofApp::setup(){
   ofSetVerticalSync(0);
   line_mesh.setMode(OF_PRIMITIVE_LINES);
   line_mesh.enableColors();
+  circle_mesh.setMode(OF_PRIMITIVE_TRIANGLES);
+  circle_mesh.enableColors();
+  circle_mesh.enableIndices();
 
   create_gui();
 }
 
-ofVboMesh ofApp::create_circle(const std::shared_ptr<Node>& node, std::size_t resolution) {
-  ofVboMesh mesh;
-  mesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
+void ofApp::create_circle(ofVboMesh& mesh, const std::shared_ptr<Node>& node, std::size_t resolution) {
+  // initially used OF_PRIMITIVE_TRIANGLE_FAN but that attached the circles by the centre
+  // instead three vertices are specificed for each triangle using OF_PRIMITIVE_TRIANGLES which avoids binding circles
+
+  if(!node->within_bounds()) return;
+
   const float ANGLE_INCREMENT = TWO_PI / resolution;
   const ofVec3f CENTRE = ofVec3f{node->pos.x, node->pos.y, 0.0f};
-  mesh.addVertex(CENTRE);
 
-  for (std::size_t i = 0; i <= resolution+1; ++i) {
-    const float ANGLE = i * ANGLE_INCREMENT;
-    const float vx = CENTRE.x + node->radius * cos(ANGLE);
-    const float vy = CENTRE.y + node->radius * sin(ANGLE);
-    mesh.addVertex(ofVec3f{vx, vy, 0.0f});
+  for (std::size_t i = 0; i <= resolution; ++i) {
+    const float vx1 = CENTRE.x + node->radius * cos(ANGLE_INCREMENT * i);
+    const float vy1 = CENTRE.y + node->radius * sin(ANGLE_INCREMENT * i);
+    const float vx2 = CENTRE.x + node->radius * cos(ANGLE_INCREMENT * (i+1));
+    const float vy2 = CENTRE.y + node->radius * sin(ANGLE_INCREMENT * (i+1));
+    mesh.addVertex(CENTRE);
+    mesh.addColor(node->node_color);
+    mesh.addVertex(ofVec3f{vx1, vy1, CENTRE.z});
+    mesh.addColor(node->node_color);
+    mesh.addVertex(ofVec3f{vx2, vy2, CENTRE.z});
+    mesh.addColor(node->node_color);
   }
-
-  return mesh;
 }
 
 void ofApp::create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
+  if(!node1->within_bounds() && !node2->within_bounds()) return;
   mesh.addVertex(ofVec3f(node1->pos.x, node1->pos.y, 0));
   mesh.addVertex(ofVec3f(node2->pos.x, node2->pos.y, 0));
 }
@@ -127,7 +137,7 @@ void ofApp::draw(){
   ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
 
   // clear graph
-  circle_meshes.clear();
+  circle_mesh.clear();
   line_mesh.clear();
 
   // generate graph
@@ -136,18 +146,13 @@ void ofApp::draw(){
       create_line(line_mesh, node, next_node);
     }
     if(!node->within_bounds()) continue;
-    circle_meshes.push_back(create_circle(node, 30));
+    create_circle(circle_mesh, node, 20);
     node->draw_label();
   }
 
   // display graph
-  ofSetColor(link_color);
   line_mesh.draw();
-  ofSetColor(node_color);
-  // needs optimisation to combine all circles into one mesh (can't seem to create disconnected circles)
-  for(const auto& mesh : circle_meshes) {
-    mesh.draw();
-  }
+  circle_mesh.draw();
 };
 
 //--------------------------------------------------------------
@@ -169,7 +174,7 @@ void ofApp::keyPressed(int key){
 }
 
 void ofApp::create_nodes_and_links() {
-  for(std::size_t i = 0; i < 500; ++i) {
+  for(std::size_t i = 0; i < 100; ++i) {
     const auto& new_node = std::make_shared<Node>(
       i,
       ofVec2f{
@@ -178,14 +183,13 @@ void ofApp::create_nodes_and_links() {
       }, radius, ofColor{52.0f, 152.0f, 219.0f}, std::to_string(i));
     nodes.push_back(new_node);
   }
-  for(std::size_t i = 0; i < nodes.size(); ++i) {
-    for(std::size_t j = 0; j < 1; ++j) {
-      const std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
-      if(i == random_idx) continue;
-      nodes[i]->neighbours.push_back(nodes[random_idx]);
-      link_count++;
-    }
+  for(std::size_t i = prev_node_count; i < nodes.size(); ++i) {
+    const std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
+    if(i == random_idx) continue;
+    nodes[i]->neighbours.push_back(nodes[random_idx]);
+    link_count++;
   }
+  prev_node_count = nodes.size();
 };
 
 //--------------------------------------------------------------
