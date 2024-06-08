@@ -184,10 +184,12 @@ void ofApp::create_nodes_and_links() {
     nodes.push_back(new_node);
   }
   for(std::size_t i = prev_node_count; i < nodes.size(); ++i) {
-    const std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
-    if(i == random_idx) continue;
-    nodes[i]->neighbours.push_back(nodes[random_idx]);
-    link_count++;
+    for(std::size_t j = 0; j < 3; ++j) {
+      const std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
+      if(i == random_idx) continue;
+      nodes[i]->neighbours.push_back(nodes[random_idx]);
+      link_count++;
+    }
   }
   prev_node_count = nodes.size();
 };
