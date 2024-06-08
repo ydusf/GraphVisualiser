@@ -91,4 +91,5 @@ class ofApp : public ofBaseApp{
 
 		ofVboMesh circle_mesh;
 		ofVboMesh line_mesh;
+		float circle_resolution;
 };

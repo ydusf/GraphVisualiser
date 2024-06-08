@@ -16,9 +16,9 @@ struct Node {
   std::string label;
   std::vector<std::shared_ptr<Node> > neighbours;
 
-  Node(std::size_t id, ofVec2f pos, float radius);
-  Node(std::size_t id, ofVec2f pos, float radius, ofColor color);
-  Node(std::size_t id, ofVec2f pos, float radius, ofColor color, std::string label);
+  Node(const std::size_t id, const ofVec2f pos, const float radius);
+  Node(const std::size_t id, const ofVec2f pos, const float radius, const ofColor color);
+  Node(const std::size_t id, const ofVec2f pos, const float radius, const ofColor color, const std::string label);
 
   bool operator==(const std::shared_ptr<Node>& node);
 

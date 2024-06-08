@@ -13,8 +13,8 @@ void ofApp::setup(){
   line_mesh.setMode(OF_PRIMITIVE_LINES);
   line_mesh.enableColors();
   circle_mesh.setMode(OF_PRIMITIVE_TRIANGLES);
-  circle_mesh.enableColors();
   circle_mesh.enableIndices();
+  circle_mesh.enableColors();
 
   create_gui();
 }
@@ -22,6 +22,9 @@ void ofApp::setup(){
 void ofApp::create_circle(ofVboMesh& mesh, const std::shared_ptr<Node>& node, std::size_t resolution) {
   // initially used OF_PRIMITIVE_TRIANGLE_FAN but that attached the circles by the centre
   // instead three vertices are specificed for each triangle using OF_PRIMITIVE_TRIANGLES which avoids binding circles
+
+  // potential optimisation is to try and get OF_PRIMITIVE_TRIANGLE_FAN or OF_PRIMITIVE_TRIANGLE_STRIP to work
+  // As this would reduce the number of vertices required by 3x
 
   if(!node->within_bounds()) return;
 
@@ -40,12 +43,33 @@ void ofApp::create_circle(ofVboMesh& mesh, const std::shared_ptr<Node>& node, st
     mesh.addVertex(ofVec3f{vx2, vy2, CENTRE.z});
     mesh.addColor(node->node_color);
   }
+
+  // const std::size_t strt_vrtx = mesh.getNumVertices();
+
+  // mesh.addVertex(CENTRE);
+
+  // for(std::size_t i = 1; i < resolution; ++i) {
+  //   const float vx = CENTRE.x + node->radius * cos(ANGLE_INCREMENT * i);
+  //   const float vy = CENTRE.y + node->radius * sin(ANGLE_INCREMENT * i);
+  //   mesh.addVertex(ofVec3f{vx, vy, CENTRE.z});
+  //   mesh.addColor(node->node_color);
+  // }
+  
+  // for(std::size_t i = strt_vrtx; i < strt_vrtx + resolution; ++i) {
+  //   const std::size_t scnd_idx = i+1;
+  //   const std::size_t thrd_idx = (i+scnd_idx) % resolution;
+  //   mesh.addIndex(strt_vrtx);
+  //   mesh.addIndex(scnd_idx);
+  //   mesh.addIndex(thrd_idx);
+  // }
 }
 
 void ofApp::create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
   if(!node1->within_bounds() && !node2->within_bounds()) return;
   mesh.addVertex(ofVec3f(node1->pos.x, node1->pos.y, 0));
+  mesh.addColor(link_color);
   mesh.addVertex(ofVec3f(node2->pos.x, node2->pos.y, 0));
+  mesh.addColor(link_color);
 }
 
 void ofApp::create_gui() {
@@ -124,6 +148,8 @@ void ofApp::update(){
     node->update();
   }
 
+  circle_resolution = std::clamp(radius*1.5f, 5.0f, 25.0f);
+
   // user interaction
   if(node_being_dragged) drag();
   if(panning) pan();
@@ -146,7 +172,7 @@ void ofApp::draw(){
       create_line(line_mesh, node, next_node);
     }
     if(!node->within_bounds()) continue;
-    create_circle(circle_mesh, node, 20);
+    create_circle(circle_mesh, node, circle_resolution);
     node->draw_label();
   }
 
@@ -184,9 +210,11 @@ void ofApp::create_nodes_and_links() {
     nodes.push_back(new_node);
   }
   for(std::size_t i = prev_node_count; i < nodes.size(); ++i) {
-    for(std::size_t j = 0; j < 3; ++j) {
-      const std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
-      if(i == random_idx) continue;
+    for(std::size_t j = 0; j < 2; ++j) {
+      std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
+      while(random_idx == i) {
+        random_idx = static_cast<int>(ofRandom(0, nodes.size()));
+      };
       nodes[i]->neighbours.push_back(nodes[random_idx]);
       link_count++;
     }
@@ -311,3 +339,5 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
 }
+
+// 62 fps | 1300 nodes | 2600 links
