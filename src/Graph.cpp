@@ -8,12 +8,6 @@
 const ofVec2f INITIAL_VELOCITY = {1.0f, 1.0f};
 const int SIZE_OF_CHAR = 8;
 
-Node::Node(std::size_t id, ofVec2f pos, float radius)
-  : id(id), pos(pos), vel(INITIAL_VELOCITY), radius(radius) {};
-
-Node::Node(std::size_t id, ofVec2f pos, float radius, ofColor color)
-  : id(id), pos(pos), vel(INITIAL_VELOCITY), radius(radius), node_color(color) {};
-
 Node::Node(std::size_t id, ofVec2f pos, float radius, ofColor color, std::string label)
   : id(id), pos(pos), vel(INITIAL_VELOCITY), radius(radius), node_color(color), label(label) {};
 
@@ -37,5 +31,3 @@ void Node::draw_label() {
   const int LABEL_OFFSET_Y = radius * 1.5;
   ofDrawBitmapString(label, pos.x - LABEL_OFFSET_X, pos.y-LABEL_OFFSET_Y);
 };
-  
-Node::~Node() {};

@@ -35,7 +35,8 @@ class ofApp : public ofBaseApp{
 		void update_gui();
 		void update_color(ofColor& color, ofxColorSlider& color_slider, ofxLabel& color_label);
 
-		void apply_force_directed_layout();
+		void apply_force_directed_layout(std::size_t from, std::size_t to);
+		void apply_force_directed_layout_multithreaded();
 		
 		void update_mouse_position();
 		void find_node_being_dragged();
@@ -55,7 +56,6 @@ class ofApp : public ofBaseApp{
 
 		std::vector<std::shared_ptr<Node> > nodes;
 		std::vector<std::tuple<int, int> > links;
-		std::vector<std::vector<bool > > adjacency_matrix;
 		std::shared_ptr<Node> node_being_dragged;
 
 		const float GRAVITY = 1.1f;

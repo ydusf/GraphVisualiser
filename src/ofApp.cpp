@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <iostream>
 #include <unordered_set>
+#include <thread>
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -38,9 +39,9 @@ void ofApp::create_circle(ofVboMesh& mesh, const std::shared_ptr<Node>& node, st
     const float vy2 = CENTRE.y + node->radius * sin(ANGLE_INCREMENT * (i+1));
     mesh.addVertex(CENTRE);
     mesh.addColor(node->node_color);
-    mesh.addVertex(ofVec3f{vx1, vy1, CENTRE.z});
+    mesh.addVertex(ofVec3f{vx1, vy1, 0.0f});
     mesh.addColor(node->node_color);
-    mesh.addVertex(ofVec3f{vx2, vy2, CENTRE.z});
+    mesh.addVertex(ofVec3f{vx2, vy2, 0.0f});
     mesh.addColor(node->node_color);
   }
 
@@ -66,9 +67,9 @@ void ofApp::create_circle(ofVboMesh& mesh, const std::shared_ptr<Node>& node, st
 
 void ofApp::create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
   if(!node1->within_bounds() && !node2->within_bounds()) return;
-  mesh.addVertex(ofVec3f(node1->pos.x, node1->pos.y, 0));
+  mesh.addVertex(ofVec3f(node1->pos.x, node1->pos.y, 0.0f));
   mesh.addColor(link_color);
-  mesh.addVertex(ofVec3f(node2->pos.x, node2->pos.y, 0));
+  mesh.addVertex(ofVec3f(node2->pos.x, node2->pos.y, 0.0f));
   mesh.addColor(link_color);
 }
 
@@ -115,26 +116,48 @@ void ofApp::update_color(ofColor& color, ofxColorSlider& color_slider, ofxLabel&
   color_label.setup("rgb(" + std::to_string(color.r) + ", " + std::to_string(color.g) + ", " + std::to_string(color.b) + ")");
 }
 
-void ofApp::apply_force_directed_layout() {
-  for(const auto& curr_node : nodes) {
+void ofApp::apply_force_directed_layout(std::size_t from, std::size_t to) {
+  for(std::size_t i = from; i < to; ++i) {
     // gravity
-    curr_node->vel = curr_node->pos * -1 * GRAVITY;
-    for(const auto& next_node : nodes) {
+    nodes[i]->vel = nodes[i]->pos * -1 * GRAVITY;
+    for(std::size_t j = from; j < to; ++j) {
       // node-node repulsion
-      const ofVec2f dir = next_node->pos - curr_node->pos;
+      const ofVec2f dir = nodes[j]->pos - nodes[i]->pos;
       const ofVec2f force = dir / (dir.lengthSquared()) * force_multi;
-      curr_node->vel -= force;
-      next_node->vel += force; 
+      nodes[i]->vel -= force;
+      nodes[j]->vel += force; 
     }
   }
 
   // link forces
-  for(const auto& node : nodes) {
-    for(const auto& neighbour : node->neighbours) {
-      const ofVec2f dis = node->pos - neighbour->pos;
-      node->vel -= dis;
-      neighbour->vel += dis;
+  for(std::size_t i = from; i < to; ++i) {
+    for(const auto& neighbour : nodes[i]->neighbours) {
+      const ofVec2f dist = nodes[i]->pos - neighbour->pos;
+      nodes[i]->vel -= dist;
+      neighbour->vel += dist;
     }
+  }
+}
+
+void ofApp::apply_force_directed_layout_multithreaded() {
+  const std::size_t num_threads = std::thread::hardware_concurrency();
+  std::vector<std::pair<std::size_t, std::size_t> > sections;
+  const std::size_t section_size = nodes.size() / num_threads;
+
+  for (std::size_t i = 0; i < num_threads; ++i) {
+    std::size_t start = i * section_size;
+    std::size_t end = (i == num_threads - 1) ? nodes.size() : (i + 1) * section_size;
+    sections.push_back({start, end});
+  }
+
+  std::vector<std::thread> threads;
+
+  for (const auto& section : sections) {
+    threads.emplace_back(&ofApp::apply_force_directed_layout, this, section.first, section.second);
+  }
+
+  for (auto& thread : threads) {
+    thread.join();
   }
 }
 
@@ -143,7 +166,8 @@ void ofApp::update(){
   update_gui();  
 
   // graph updates
-  apply_force_directed_layout();
+  apply_force_directed_layout_multithreaded();
+  // apply_force_directed_layout(0, nodes.size());
   for (const auto& node : nodes) {
     node->update();
   }
@@ -173,7 +197,7 @@ void ofApp::draw(){
     }
     if(!node->within_bounds()) continue;
     create_circle(circle_mesh, node, circle_resolution);
-    node->draw_label();
+    // node->draw_label();
   }
 
   // display graph
@@ -201,13 +225,12 @@ void ofApp::keyPressed(int key){
 
 void ofApp::create_nodes_and_links() {
   for(std::size_t i = 0; i < 100; ++i) {
-    const auto& new_node = std::make_shared<Node>(
-      i,
-      ofVec2f{
+    nodes.emplace_back(std::make_shared<Node>(
+      i, ofVec2f{
         ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
         ofRandom(-START_DIST_MULTI*ofGetHeight() , START_DIST_MULTI*ofGetHeight())
-      }, radius, ofColor{52.0f, 152.0f, 219.0f}, std::to_string(i));
-    nodes.push_back(new_node);
+      }, radius, ofColor{52.0f, 152.0f, 219.0f}, std::to_string(i))
+    );
   }
   for(std::size_t i = prev_node_count; i < nodes.size(); ++i) {
     for(std::size_t j = 0; j < 2; ++j) {
