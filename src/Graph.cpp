@@ -28,5 +28,5 @@ void Node::draw_label(const ofColor& label_color) const {
   ofSetColor(label_color);
   const int LABEL_OFFSET_X = (label.length() * SIZE_OF_CHAR) / 2;
   const int LABEL_OFFSET_Y = radius * 1.5;
-  ofDrawBitmapString(label, pos.x - LABEL_OFFSET_X, pos.y-LABEL_OFFSET_Y);
+  ofDrawBitmapString(label, pos.x-LABEL_OFFSET_X, pos.y-LABEL_OFFSET_Y);
 };

@@ -2,7 +2,7 @@
 
 #include <cstddef>
 #include <iostream>
-#include <unordered_set>
+#include <unordered_map>
 #include <thread>
 
 //--------------------------------------------------------------
@@ -95,56 +95,64 @@ void ofApp::update_color(ofColor& color, ofxColorSlider& color_slider, ofxLabel&
   color_label.setup("rgb(" + std::to_string(color.r) + ", " + std::to_string(color.g) + ", " + std::to_string(color.b) + ")");
 }
 
-void ofApp::apply_gravity(std::size_t from, std::size_t to) {
-  for(std::size_t i = from; i < to; ++i) {
-    nodes[i]->vel = -nodes[i]->pos * GRAVITY;
+std::pair<std::size_t, std::size_t> ofApp::get_grid_cell(const ofVec2f& pos) {
+  return std::make_pair(
+    static_cast<std::size_t>(pos.x / ofGetWidth() / 4),
+    static_cast<std::size_t>(pos.y / ofGetHeight() / 2)
+  );
+};
+
+void ofApp::populate_grid() {
+  grid.clear();
+  for(std::size_t i = 0; i < nodes.size(); ++i) {
+    const auto& cell = get_grid_cell(nodes[i]->pos);
+    grid[cell].push_back(i);
   }
 };
-void ofApp::apply_node_repulsion(std::size_t from, std::size_t to) {
- for(std::size_t i = from; i < to; ++i) {
-    for(std::size_t j = from; j < to; ++j) {
-      const ofVec2f dir = nodes[j]->pos - nodes[i]->pos;
+
+void ofApp::apply_gravity(std::vector<std::size_t>& cell) {
+  for(const auto& node_idx : cell) {
+    nodes[node_idx]->vel = -nodes[node_idx]->pos * GRAVITY;
+  }
+};
+void ofApp::apply_node_repulsion(std::vector<std::size_t>& cell) {
+  for(const auto& node_idx : cell) {
+    for(const auto& neighbour : nodes[node_idx]->neighbours) {
+      const ofVec2f dir = neighbour.lock()->pos - nodes[node_idx]->pos;
       const float length_squared = dir.lengthSquared();
-      if(length_squared == 0 || i == j) continue;
+      if(length_squared == 0 || nodes[node_idx] == neighbour.lock()) continue;
       const ofVec2f force = dir / length_squared * force_multi;
 
-      nodes[i]->vel -= force;
-      nodes[j]->vel += force; 
+      nodes[node_idx]->vel -= force;
+      neighbour.lock()->vel += force; 
     }
   }
 };
-void ofApp::apply_link_forces(std::size_t from, std::size_t to) {
-  for(std::size_t i = from; i < to; ++i) {
-    for(const auto& neighbour : nodes[i]->neighbours) {
+void ofApp::apply_link_forces(std::vector<std::size_t>& cell) {
+  for(const auto& node_idx : cell) {
+    for(const auto& neighbour : nodes[node_idx]->neighbours) {
       if(neighbour.expired()) return;
-      const ofVec2f dist = nodes[i]->pos - neighbour.lock()->pos;
+      const ofVec2f dist = nodes[node_idx]->pos - neighbour.lock()->pos;
 
-      nodes[i]->vel -= dist;
+      nodes[node_idx]->vel -= dist;
       neighbour.lock()->vel += dist;
     }
   }
 };
 
-void ofApp::apply_force_directed_layout(std::size_t from, std::size_t to) {
-  apply_gravity(from, to);
-  apply_node_repulsion(from, to);
-  apply_link_forces(from, to);
+void ofApp::apply_force_directed_layout(std::vector<std::size_t>& cell) {
+  apply_gravity(cell);
+  apply_node_repulsion(cell);
+  apply_link_forces(cell);
 }
 
 void ofApp::apply_force_directed_layout_multithreaded() {
-  std::vector<std::pair<std::size_t, std::size_t> > sections;
-  const std::size_t section_size = nodes.size() / num_threads;
-
-  for (std::size_t i = 0; i < num_threads; ++i) {
-    const std::size_t start = i * section_size;
-    const std::size_t end = (i == num_threads - 1) ? nodes.size() : (i + 1) * section_size;
-    sections.push_back(std::make_pair(start, end));
-  }
+  populate_grid();
 
   std::vector<std::thread> threads;
 
-  for (const auto& section : sections) {
-    threads.emplace_back(&ofApp::apply_force_directed_layout, this, section.first, section.second);
+  for(auto& cell : grid) {
+    threads.emplace_back(&ofApp::apply_force_directed_layout, this, std::ref(cell.second));
   }
 
   for (auto& thread : threads) {
@@ -160,7 +168,7 @@ void ofApp::create_meshes(std::size_t from, std::size_t to) {
     }
     if(!nodes[i]->within_bounds()) continue;
     create_circle(circle_mesh, nodes[i], circle_resolution);
-    // nodes[i]->draw_label();
+    // nodes[i]->draw_label(label_color);
   }
 }
 
@@ -169,11 +177,10 @@ void ofApp::update(){
   update_gui();  
 
   // graph updates
-  apply_force_directed_layout_multithreaded();
-  // apply_force_directed_layout(0, nodes.size());
   for (const auto& node : nodes) {
     node->update();
   }
+  apply_force_directed_layout_multithreaded();
 
   circle_resolution = std::clamp(radius*1.5f, 4.0f, 25.0f);
 
@@ -228,7 +235,7 @@ void ofApp::create_nodes_and_links() {
     );
   }
   for(std::size_t i = prev_node_count; i < nodes.size(); ++i) {
-    for(std::size_t j = 0; j < 2; ++j) {
+    for(std::size_t j = 0; j < 5; ++j) {
       std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
       while(random_idx == i) {
         random_idx = static_cast<int>(ofRandom(0, nodes.size()));

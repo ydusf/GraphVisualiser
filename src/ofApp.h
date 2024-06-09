@@ -10,6 +10,12 @@
 #include <cstddef>
 #include <thread>
 
+struct GridHash {
+  std::size_t operator()(const std::pair<std::size_t, std::size_t>& key) const {
+		return std::hash<std::size_t>()(key.first) ^ (std::hash<std::size_t>()(key.second) << 1);
+	}
+};
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -36,10 +42,13 @@ class ofApp : public ofBaseApp{
 		void update_gui();
 		void update_color(ofColor& color, ofxColorSlider& color_slider, ofxLabel& color_label);
 
-		void apply_gravity(std::size_t from, std::size_t to);
-		void apply_node_repulsion(std::size_t from, std::size_t to);
-		void apply_link_forces(std::size_t from, std::size_t to);
-		void apply_force_directed_layout(std::size_t from, std::size_t to);
+		std::pair<std::size_t, std::size_t> get_grid_cell(const ofVec2f& pos);
+		void populate_grid();
+
+		void apply_gravity(std::vector<std::size_t>& cell);
+		void apply_node_repulsion(std::vector<std::size_t>& cell);
+		void apply_link_forces(std::vector<std::size_t>& cell);
+		void apply_force_directed_layout(std::vector<std::size_t>& cell);
 		void apply_force_directed_layout_multithreaded();
 		
 		void update_mouse_position();
@@ -50,12 +59,15 @@ class ofApp : public ofBaseApp{
 		void create_nodes_and_links();
 
 		void create_meshes(std::size_t from, std::size_t to);
-		void generate_graph_multithreaded();
 		void create_circle(ofVboMesh &mesh, const std::shared_ptr<Node>& node, std::size_t resolution);
 		void create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2);
 
 	private:
-		const std::size_t num_threads = std::thread::hardware_concurrency();
+		const float num_threads = std::thread::hardware_concurrency();
+		std::unordered_map<
+			std::pair<std::size_t, std::size_t>,
+			std::vector<std::size_t>, GridHash
+		> grid;
 
 		ofVec2f mouse_position;
 		ofVec2f prev_mouse_position;
@@ -63,13 +75,12 @@ class ofApp : public ofBaseApp{
 		bool panning = false;
 
 		std::vector<std::shared_ptr<Node> > nodes;
-		std::vector<std::tuple<int, int> > links;
 		std::shared_ptr<Node> node_being_dragged;
 
 		const float GRAVITY = 1.1f;
 		const float START_DIST_MULTI = 1.0f;
 		const float MIN_RADIUS = 1.0f, MAX_RADIUS = 15.0f;
-		const float MIN_FORCE_MULTI = 10.0f, MAX_FORCE_MULTI = 5000.0f;
+		const float MIN_FORCE_MULTI = 10.0f, MAX_FORCE_MULTI = 200000.0f;
 		float force_multi = 1000.0f;
 		float lerp_val = 0.2f;
 
