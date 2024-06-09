@@ -12,16 +12,16 @@ struct Node {
   ofVec2f pos, vel;
   float radius;
   ofColor node_color;
-  ofColor label_color;
   std::string label;
-  std::vector<std::shared_ptr<Node> > neighbours;
+  std::vector<std::weak_ptr<Node> > neighbours;
 
-  Node(const std::size_t id, const ofVec2f pos, const float radius, const ofColor color, const std::string label);
+  Node(std::size_t id, const ofVec2f& pos, float radius, const ofColor& color, std::string label);
 
-  bool operator==(const std::shared_ptr<Node>& node);
+  bool operator==(const std::shared_ptr<Node>& node) const;
+  bool compare(const std::shared_ptr<Node>& first, const std::shared_ptr<Node>& second) const;
 
-  bool within_bounds();
+  bool within_bounds() const;
 
   void update();
-  void draw_label();
+  void draw_label(const ofColor& label_color) const;
   };

@@ -9,8 +9,7 @@
 void ofApp::setup(){
   ofBackground(ofColor::black);
   ofEnableSmoothing();
-  ofSetFrameRate(0);
-  ofSetVerticalSync(0);
+  ofSetFrameRate(60);
   line_mesh.setMode(OF_PRIMITIVE_LINES);
   line_mesh.enableColors();
   circle_mesh.setMode(OF_PRIMITIVE_TRIANGLES);
@@ -44,25 +43,6 @@ void ofApp::create_circle(ofVboMesh& mesh, const std::shared_ptr<Node>& node, st
     mesh.addVertex(ofVec3f{vx2, vy2, 0.0f});
     mesh.addColor(node->node_color);
   }
-
-  // const std::size_t strt_vrtx = mesh.getNumVertices();
-
-  // mesh.addVertex(CENTRE);
-
-  // for(std::size_t i = 1; i < resolution; ++i) {
-  //   const float vx = CENTRE.x + node->radius * cos(ANGLE_INCREMENT * i);
-  //   const float vy = CENTRE.y + node->radius * sin(ANGLE_INCREMENT * i);
-  //   mesh.addVertex(ofVec3f{vx, vy, CENTRE.z});
-  //   mesh.addColor(node->node_color);
-  // }
-  
-  // for(std::size_t i = strt_vrtx; i < strt_vrtx + resolution; ++i) {
-  //   const std::size_t scnd_idx = i+1;
-  //   const std::size_t thrd_idx = (i+scnd_idx) % resolution;
-  //   mesh.addIndex(strt_vrtx);
-  //   mesh.addIndex(scnd_idx);
-  //   mesh.addIndex(thrd_idx);
-  // }
 }
 
 void ofApp::create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
@@ -75,14 +55,14 @@ void ofApp::create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, con
 
 void ofApp::create_gui() {
   gui.setup();
-  gui.add(force_multi_slider.setup("Force Multiplier", 500.0f, MIN_FORCE_MULTI, MAX_FORCE_MULTI));
-  gui.add(radius_slider.setup("Node Radius", 4.0f, MIN_RADIUS, MAX_RADIUS));
+  gui.add(force_multi_slider.setup("Force Multiplier", force_multi, MIN_FORCE_MULTI, MAX_FORCE_MULTI));
+  gui.add(radius_slider.setup("Node Radius", radius, MIN_RADIUS, MAX_RADIUS));
   add_color_slider(gui, node_color, "Node", node_color_label, node_color_slider);
   add_color_slider(gui, link_color, "Link", link_color_label, link_color_slider);
   add_color_slider(gui, label_color, "Label", label_color_label, label_color_slider);
 }
 
-void ofApp::add_color_slider(ofxPanel& gui, ofColor& color, const std::string& label, ofxLabel& color_label, ofxColorSlider& color_slider) {
+void ofApp::add_color_slider(ofxPanel& gui, const ofColor& color, const std::string& label, ofxLabel& color_label, ofxColorSlider& color_slider) {
   color_label.setup(label, "rgb(" + std::to_string(color.r) + ", " + std::to_string(color.g) + ", " + std::to_string(color.b) + ")");
   gui.add(color_slider.setup(color, 20, 20));
 }
@@ -106,7 +86,6 @@ void ofApp::update_gui() {
     prev_label_color = label_color;
     for(const auto& node : nodes) {
       node->node_color = node_color;
-      node->label_color = label_color;
     }
   }
 }
@@ -116,38 +95,50 @@ void ofApp::update_color(ofColor& color, ofxColorSlider& color_slider, ofxLabel&
   color_label.setup("rgb(" + std::to_string(color.r) + ", " + std::to_string(color.g) + ", " + std::to_string(color.b) + ")");
 }
 
-void ofApp::apply_force_directed_layout(std::size_t from, std::size_t to) {
+void ofApp::apply_gravity(std::size_t from, std::size_t to) {
   for(std::size_t i = from; i < to; ++i) {
-    // gravity
-    nodes[i]->vel = nodes[i]->pos * -1 * GRAVITY;
+    nodes[i]->vel = -nodes[i]->pos * GRAVITY;
+  }
+};
+void ofApp::apply_node_repulsion(std::size_t from, std::size_t to) {
+ for(std::size_t i = from; i < to; ++i) {
     for(std::size_t j = from; j < to; ++j) {
-      // node-node repulsion
       const ofVec2f dir = nodes[j]->pos - nodes[i]->pos;
-      const ofVec2f force = dir / (dir.lengthSquared()) * force_multi;
+      const float length_squared = dir.lengthSquared();
+      if(length_squared == 0 || i == j) continue;
+      const ofVec2f force = dir / length_squared * force_multi;
+
       nodes[i]->vel -= force;
       nodes[j]->vel += force; 
     }
   }
-
-  // link forces
+};
+void ofApp::apply_link_forces(std::size_t from, std::size_t to) {
   for(std::size_t i = from; i < to; ++i) {
     for(const auto& neighbour : nodes[i]->neighbours) {
-      const ofVec2f dist = nodes[i]->pos - neighbour->pos;
+      if(neighbour.expired()) return;
+      const ofVec2f dist = nodes[i]->pos - neighbour.lock()->pos;
+
       nodes[i]->vel -= dist;
-      neighbour->vel += dist;
+      neighbour.lock()->vel += dist;
     }
   }
+};
+
+void ofApp::apply_force_directed_layout(std::size_t from, std::size_t to) {
+  apply_gravity(from, to);
+  apply_node_repulsion(from, to);
+  apply_link_forces(from, to);
 }
 
 void ofApp::apply_force_directed_layout_multithreaded() {
-  const std::size_t num_threads = std::thread::hardware_concurrency();
   std::vector<std::pair<std::size_t, std::size_t> > sections;
   const std::size_t section_size = nodes.size() / num_threads;
 
   for (std::size_t i = 0; i < num_threads; ++i) {
-    std::size_t start = i * section_size;
-    std::size_t end = (i == num_threads - 1) ? nodes.size() : (i + 1) * section_size;
-    sections.push_back({start, end});
+    const std::size_t start = i * section_size;
+    const std::size_t end = (i == num_threads - 1) ? nodes.size() : (i + 1) * section_size;
+    sections.push_back(std::make_pair(start, end));
   }
 
   std::vector<std::thread> threads;
@@ -158,6 +149,18 @@ void ofApp::apply_force_directed_layout_multithreaded() {
 
   for (auto& thread : threads) {
     thread.join();
+  }
+}
+
+void ofApp::create_meshes(std::size_t from, std::size_t to) {
+  for(std::size_t i = from; i < to; ++i) {
+    for(const auto& next_node : nodes[i]->neighbours) {
+      if(next_node.expired()) continue;
+      create_line(line_mesh, nodes[i], next_node.lock());
+    }
+    if(!nodes[i]->within_bounds()) continue;
+    create_circle(circle_mesh, nodes[i], circle_resolution);
+    // nodes[i]->draw_label();
   }
 }
 
@@ -172,7 +175,7 @@ void ofApp::update(){
     node->update();
   }
 
-  circle_resolution = std::clamp(radius*1.5f, 5.0f, 25.0f);
+  circle_resolution = std::clamp(radius*1.5f, 4.0f, 25.0f);
 
   // user interaction
   if(node_being_dragged) drag();
@@ -190,15 +193,7 @@ void ofApp::draw(){
   circle_mesh.clear();
   line_mesh.clear();
 
-  // generate graph
-  for(const auto& node : nodes) {
-    for(const auto& next_node : node->neighbours) {
-      create_line(line_mesh, node, next_node);
-    }
-    if(!node->within_bounds()) continue;
-    create_circle(circle_mesh, node, circle_resolution);
-    // node->draw_label();
-  }
+  create_meshes(0, nodes.size());
 
   // display graph
   line_mesh.draw();
@@ -224,7 +219,7 @@ void ofApp::keyPressed(int key){
 }
 
 void ofApp::create_nodes_and_links() {
-  for(std::size_t i = 0; i < 100; ++i) {
+  for(std::size_t i = 0; i < 250; ++i) {
     nodes.emplace_back(std::make_shared<Node>(
       i, ofVec2f{
         ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
@@ -363,4 +358,7 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
 }
 
-// 62 fps | 1300 nodes | 2600 links
+// Fix force-directed layout algorithm during multithreading - potentially using a spatial grid
+// Optimise circle creation by using OF_PRIMITIVE_TRIANGLE_STRIP / OF_PRIMITIVE_TRIANGLE_FAN
+// Create zoom functionality
+// Optimise label drawings by creating them on a mesh and then drawing once - maybe not possible.
