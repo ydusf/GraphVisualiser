@@ -59,8 +59,8 @@ class ofApp : public ofBaseApp{
 		void create_nodes_and_links();
 
 		void create_meshes(std::size_t from, std::size_t to);
-		void create_circle(ofVboMesh &mesh, const std::shared_ptr<Node>& node, std::size_t resolution);
-		void create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2);
+		void create_circle(ofVboMesh &mesh, const std::unique_ptr<Node>& node, std::size_t resolution);
+		void create_line(ofVboMesh &mesh, const std::unique_ptr<Node>& node1, const std::unique_ptr<Node>& node2);
 
 	private:
 		const float num_threads = std::thread::hardware_concurrency();
@@ -71,11 +71,11 @@ class ofApp : public ofBaseApp{
 
 		ofVec2f mouse_position;
 		ofVec2f prev_mouse_position;
-		std::size_t prev_node_count;
+		int prev_node_count;
 		bool panning = false;
 
-		std::vector<std::shared_ptr<Node> > nodes;
-		std::shared_ptr<Node> node_being_dragged;
+		std::vector<std::unique_ptr<Node> > nodes;
+		int node_being_dragged_idx = -1;
 
 		const float GRAVITY = 1.1f;
 		const float START_DIST_MULTI = 1.0f;

@@ -13,7 +13,7 @@ namespace {
 Node::Node(std::size_t id, const ofVec2f& pos, float radius, const ofColor& color, std::string label)
   : pos(pos), vel(g_initial_velocity), radius(radius), node_color(color), label(label), m_id(id) {};
 
-bool Node::operator==(const std::shared_ptr<Node>& node) const {
+bool Node::operator==(const std::unique_ptr<Node>& node) const {
   return m_id == node->m_id;
 };
 

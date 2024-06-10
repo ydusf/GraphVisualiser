@@ -13,11 +13,11 @@ public:
   float radius;
   ofColor node_color;
   std::string label;
-  std::vector<std::weak_ptr<Node> > neighbours;
+  std::vector<std::size_t> neighbours;
 
   Node(std::size_t id, const ofVec2f& pos, float radius, const ofColor& color, std::string label);
 
-  bool operator==(const std::shared_ptr<Node>& node) const;
+  bool operator==(const std::unique_ptr<Node>& node) const;
 
   bool within_bounds() const;
 

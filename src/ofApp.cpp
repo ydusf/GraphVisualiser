@@ -19,7 +19,7 @@ void ofApp::setup(){
   create_gui();
 }
 
-void ofApp::create_circle(ofVboMesh& mesh, const std::shared_ptr<Node>& node, std::size_t resolution) {
+void ofApp::create_circle(ofVboMesh& mesh, const std::unique_ptr<Node>& node, std::size_t resolution) {
   // initially used OF_PRIMITIVE_TRIANGLE_FAN but that attached the circles by the centre
   // instead three vertices are specificed for each triangle using OF_PRIMITIVE_TRIANGLES which avoids binding circles
 
@@ -45,7 +45,7 @@ void ofApp::create_circle(ofVboMesh& mesh, const std::shared_ptr<Node>& node, st
   }
 }
 
-void ofApp::create_line(ofVboMesh &mesh, const std::shared_ptr<Node>& node1, const std::shared_ptr<Node>& node2) {
+void ofApp::create_line(ofVboMesh &mesh, const std::unique_ptr<Node>& node1, const std::unique_ptr<Node>& node2) {
   if(!node1->within_bounds() && !node2->within_bounds()) return;
   mesh.addVertex(ofVec3f(node1->pos.x, node1->pos.y, 0.0f));
   mesh.addColor(link_color);
@@ -117,25 +117,24 @@ void ofApp::apply_gravity(std::vector<std::size_t>& cell) {
 };
 void ofApp::apply_node_repulsion(std::vector<std::size_t>& cell) {
   for(const auto& node_idx : cell) {
-    for(const auto& neighbour : nodes[node_idx]->neighbours) {
-      const ofVec2f dir = neighbour.lock()->pos - nodes[node_idx]->pos;
+    for(const auto& neighbour_idx : nodes[node_idx]->neighbours) {
+      const ofVec2f dir = nodes[neighbour_idx]->pos - nodes[node_idx]->pos;
       const float length_squared = dir.lengthSquared();
-      if(length_squared == 0 || nodes[node_idx] == neighbour.lock()) continue;
+      if(length_squared == 0 || nodes[node_idx] == nodes[neighbour_idx]) continue;
       const ofVec2f force = dir / length_squared * force_multi;
 
       nodes[node_idx]->vel -= force;
-      neighbour.lock()->vel += force; 
+      nodes[neighbour_idx]->vel += force; 
     }
   }
 };
 void ofApp::apply_link_forces(std::vector<std::size_t>& cell) {
   for(const auto& node_idx : cell) {
-    for(const auto& neighbour : nodes[node_idx]->neighbours) {
-      if(neighbour.expired()) return;
-      const ofVec2f dist = nodes[node_idx]->pos - neighbour.lock()->pos;
+    for(const auto& neighbour_idx : nodes[node_idx]->neighbours) {
+      const ofVec2f dist = nodes[node_idx]->pos - nodes[neighbour_idx]->pos;
 
       nodes[node_idx]->vel -= dist;
-      neighbour.lock()->vel += dist;
+      nodes[neighbour_idx]->vel += dist;
     }
   }
 };
@@ -162,9 +161,8 @@ void ofApp::apply_force_directed_layout_multithreaded() {
 
 void ofApp::create_meshes(std::size_t from, std::size_t to) {
   for(std::size_t i = from; i < to; ++i) {
-    for(const auto& next_node : nodes[i]->neighbours) {
-      if(next_node.expired()) continue;
-      create_line(line_mesh, nodes[i], next_node.lock());
+    for(const auto& j : nodes[i]->neighbours) {
+      create_line(line_mesh, nodes[i], nodes[j]);
     }
     if(!nodes[i]->within_bounds()) continue;
     create_circle(circle_mesh, nodes[i], circle_resolution);
@@ -185,7 +183,7 @@ void ofApp::update(){
   circle_resolution = std::clamp(radius*1.5f, 4.0f, 25.0f);
 
   // user interaction
-  if(node_being_dragged) drag();
+  if(node_being_dragged_idx != -1) drag();
   if(panning) pan();
 }
 
@@ -227,7 +225,7 @@ void ofApp::keyPressed(int key){
 
 void ofApp::create_nodes_and_links() {
   for(std::size_t i = 0; i < 250; ++i) {
-    nodes.emplace_back(std::make_shared<Node>(
+    nodes.emplace_back(std::make_unique<Node>(
       i, ofVec2f{
         ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
         ofRandom(-START_DIST_MULTI*ofGetHeight() , START_DIST_MULTI*ofGetHeight())
@@ -240,7 +238,7 @@ void ofApp::create_nodes_and_links() {
       while(random_idx == i) {
         random_idx = static_cast<int>(ofRandom(0, nodes.size()));
       };
-      nodes[i]->neighbours.push_back(nodes[random_idx]);
+      nodes[i]->neighbours.push_back(random_idx);
       link_count++;
     }
   }
@@ -272,16 +270,16 @@ void ofApp::pan() {
 
 void ofApp::find_node_being_dragged() {
   update_mouse_position();
-  for(const auto& node : nodes) {
-    if(node->pos.distance(mouse_position) >= node->radius) continue;
-    node_being_dragged = node;
+  for(std::size_t i = 0; i < nodes.size(); ++i) {
+    if(nodes[i]->pos.distance(mouse_position) >= nodes[i]->radius) continue;
+    node_being_dragged_idx = i;
     break;
   }
 }
 
 void ofApp::drag() {
   update_mouse_position();
-  node_being_dragged->pos.interpolate(mouse_position, lerp_val);
+  nodes[node_being_dragged_idx]->pos.interpolate(mouse_position, lerp_val);
   if(lerp_val < 0.95) lerp_val += 0.02;
 }
 
@@ -294,12 +292,12 @@ void ofApp::mousePressed(int x, int y, int button){
   update_mouse_position();
 
   if(button == OF_MOUSE_BUTTON_LEFT) {
-    if(node_being_dragged) return;
+    if(node_being_dragged_idx != -1) return;
 
     find_node_being_dragged();
 
     // node not found so must be panning
-    if(!node_being_dragged) panning = true;
+    if(node_being_dragged_idx == -1) panning = true;
   }
 
   if(button == OF_MOUSE_BUTTON_RIGHT) {
@@ -314,13 +312,15 @@ void ofApp::mousePressed(int x, int y, int button){
       }
     } 
 
-    const auto& new_node = std::make_shared<Node>(
-      nodes.size(), ofVec2f{mouse_position}, radius,
-      ofColor{52.0f, 152.0f, 219.0f}, std::to_string(nodes.size())
-    );
-    nodes.push_back(new_node);
+    nodes.emplace_back(std::make_unique<Node>(
+      nodes.size(), 
+      ofVec2f{mouse_position}, 
+      radius, 
+      ofColor{52.0f, 152.0f, 219.0f}, 
+      std::to_string(nodes.size())
+    ));
     if(nodes.size() < 2) return;
-    new_node->neighbours.push_back(nodes[closest_node]);
+    nodes[nodes.size()-1]->neighbours.push_back(closest_node);
   }
 }
 
@@ -328,7 +328,7 @@ void ofApp::mousePressed(int x, int y, int button){
 void ofApp::mouseReleased(int x, int y, int button){
   // reset mouse-related variables
   panning = false;
-  node_being_dragged = nullptr;
+  node_being_dragged_idx = -1;
 }
 
 //--------------------------------------------------------------
