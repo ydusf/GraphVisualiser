@@ -11,11 +11,10 @@ class Node {
 public:
   ofVec2f pos, vel;
   float radius;
-  ofColor node_color;
   std::string label;
   std::vector<std::size_t> neighbours;
 
-  Node(std::size_t id, const ofVec2f& pos, float radius, const ofColor& color, std::string label);
+  Node(std::size_t id, const ofVec2f& pos, float radius, std::string label);
 
   bool operator==(const std::unique_ptr<Node>& node) const;
 

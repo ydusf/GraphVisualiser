@@ -156,3 +156,6 @@ scripts/templates/vs/.vs/
 **/.vs/
 
 vendor
+graph_data
+*.js
+generate_graph.txt

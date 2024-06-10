@@ -2,7 +2,7 @@
 
 #include "ofMain.h"
 #include "Graph.h"
-#include "ofxGui.h"
+#include "Gui.h"
 
 #include <vector>
 #include <memory>
@@ -37,11 +37,6 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo) override;
 		void gotMessage(ofMessage msg) override;
 
-		void create_gui();
-		void add_color_slider(ofxPanel& gui, const ofColor& color, const std::string& label, ofxLabel& color_label, ofxColorSlider& color_slider);
-		void update_gui();
-		void update_color(ofColor& color, ofxColorSlider& color_slider, ofxLabel& color_label);
-
 		std::pair<std::size_t, std::size_t> get_grid_cell(const ofVec2f& pos);
 		void populate_grid();
 
@@ -63,50 +58,23 @@ class ofApp : public ofBaseApp{
 		void create_line(ofVboMesh &mesh, const std::unique_ptr<Node>& node1, const std::unique_ptr<Node>& node2);
 
 	private:
-		const float num_threads = std::thread::hardware_concurrency();
 		std::unordered_map<
 			std::pair<std::size_t, std::size_t>,
 			std::vector<std::size_t>, GridHash
 		> grid;
 
+		Gui gui;
+
+		const float GRAVITY = 1.1f;
+		const float START_DIST_MULTI = 1.0f;
+
 		ofVec2f mouse_position;
 		ofVec2f prev_mouse_position;
-		int prev_node_count;
 		bool panning = false;
 
 		std::vector<std::unique_ptr<Node> > nodes;
 		int node_being_dragged_idx = -1;
-
-		const float GRAVITY = 1.1f;
-		const float START_DIST_MULTI = 1.0f;
-		const float MIN_RADIUS = 1.0f, MAX_RADIUS = 15.0f;
-		const float MIN_FORCE_MULTI = 10.0f, MAX_FORCE_MULTI = 200000.0f;
-		float force_multi = 1000.0f;
 		float lerp_val = 0.2f;
-
-		float radius = 4.0f;
-		float prev_radius = radius;
-		std::size_t link_count = 0;
-
-		ofxPanel gui;
-
-		ofxFloatSlider force_multi_slider;
-		ofxFloatSlider radius_slider;
-		ofxColorSlider node_color_slider;
-		ofxColorSlider link_color_slider;
-		ofxColorSlider label_color_slider;
-
-		ofxLabel node_count_label;
-		ofxLabel link_count_label;
-		ofxLabel node_color_label;
-		ofxLabel link_color_label;
-		ofxLabel label_color_label;
-
-		ofColor node_color;
-		ofColor prev_node_color = node_color;
-		ofColor link_color = {255.0f, 255.0f, 255.0f, 65.0f};
-		ofColor label_color;
-		ofColor prev_label_color = label_color;
 
 		ofVboMesh circle_mesh;
 		ofVboMesh line_mesh;

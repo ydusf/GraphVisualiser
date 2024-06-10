@@ -10,8 +10,10 @@ namespace {
   const int g_size_of_char = 8;
 }
 
-Node::Node(std::size_t id, const ofVec2f& pos, float radius, const ofColor& color, std::string label)
-  : pos(pos), vel(g_initial_velocity), radius(radius), node_color(color), label(label), m_id(id) {};
+Node::Node(std::size_t id, const ofVec2f& pos, float radius, std::string label)
+  : pos(pos), vel(g_initial_velocity),
+  radius(radius), label(label), m_id(id) 
+{};
 
 bool Node::operator==(const std::unique_ptr<Node>& node) const {
   return m_id == node->m_id;
@@ -27,6 +29,7 @@ void Node::update() {
 };
 
 void Node::draw_label(const ofColor& label_color) const {
+  if(!within_bounds()) return;
   ofSetColor(label_color);
   const int LABEL_OFFSET_X = (label.length() * g_size_of_char) / 2;
   const int LABEL_OFFSET_Y = radius * 1.5;
