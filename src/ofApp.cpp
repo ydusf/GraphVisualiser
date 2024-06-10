@@ -235,7 +235,7 @@ void ofApp::create_nodes_and_links() {
     );
   }
   for(std::size_t i = prev_node_count; i < nodes.size(); ++i) {
-    for(std::size_t j = 0; j < 5; ++j) {
+    for(std::size_t j = 0; j < 3; ++j) {
       std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
       while(random_idx == i) {
         random_idx = static_cast<int>(ofRandom(0, nodes.size()));
