@@ -69,8 +69,8 @@ class ofApp : public ofBaseApp{
 			std::vector<std::size_t>, GridHash
 		> grid;
 
-		const float GRAVITY = 1.1f;
-		const float START_DIST_MULTI = 1.0f;
+		static constexpr float GRAVITY = 1.1f;
+		static constexpr float START_DIST_MULTI = 1.0f;
 
 		ofVec2f mouse_position;
 		ofVec2f prev_mouse_position;

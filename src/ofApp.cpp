@@ -87,26 +87,26 @@ void ofApp::apply_gravity(std::vector<std::size_t>& cell) {
   }
 };
 void ofApp::apply_node_repulsion(std::vector<std::size_t>& cell) {
-  for(const auto& node_idx : cell) {
-    for(const auto& neighbour_idx : nodes[node_idx]->neighbours) {
-      const ofVec2f dir = nodes[neighbour_idx]->pos - nodes[node_idx]->pos;
-      const double epsilon = 1e-10;
-      const float length_squared = dir.lengthSquared() + epsilon;
-      const ofVec2f force = dir / length_squared * gui.force;
-      nodes[node_idx]->vel -= force;
-      nodes[neighbour_idx]->vel += force; 
-    }
-  }
   // for(const auto& node_idx : cell) {
-  //   for(const auto& next_node : nodes) {
-  //     const ofVec2f dir = next_node->pos - nodes[node_idx]->pos;
+  //   for(const auto& neighbour_idx : nodes[node_idx]->neighbours) {
+  //     const ofVec2f dir = nodes[neighbour_idx]->pos - nodes[node_idx]->pos;
   //     const double epsilon = 1e-10;
   //     const float length_squared = dir.lengthSquared() + epsilon;
   //     const ofVec2f force = dir / length_squared * gui.force;
   //     nodes[node_idx]->vel -= force;
-  //     next_node->vel += force; 
+  //     nodes[neighbour_idx]->vel += force; 
   //   }
   // }
+  for(const auto& node_idx : cell) {
+    for(const auto& next_node : nodes) {
+      const ofVec2f dir = next_node->pos - nodes[node_idx]->pos;
+      const double epsilon = 1e-10;
+      const float length_squared = dir.lengthSquared() + epsilon;
+      const ofVec2f force = dir / length_squared * gui.force;
+      nodes[node_idx]->vel -= force;
+      next_node->vel += force; 
+    }
+  }
 };
 void ofApp::apply_link_forces(std::vector<std::size_t>& cell) {
   for(const auto& node_idx : cell) {
@@ -127,15 +127,15 @@ void ofApp::apply_force_directed_layout(std::vector<std::size_t>& cell) {
 void ofApp::apply_force_directed_layout_multithreaded() {
   populate_grid();
   // std::vector<std::thread> threads;
-  // for(auto& cell : grid) {
-  //   threads.emplace_back(&ofApp::apply_force_directed_layout, this, std::ref(cell.second));
+  // for(auto&[cell, cell_nodes] : grid) {
+  //   threads.emplace_back(&ofApp::apply_force_directed_layout, this, std::ref(cell_nodes));
   // }
   // for (auto& thread : threads) {
   //   thread.join();
   // }
 
-  for(auto& cell : grid) {
-    apply_force_directed_layout(cell.second);
+  for(auto&[cell, cell_nodes] : grid) {
+    apply_force_directed_layout(cell_nodes);
   }
 }
 

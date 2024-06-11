@@ -1,7 +1,7 @@
 #include "Gui.h"
 
 const float MIN_RADIUS = 1.0f, MAX_RADIUS = 15.0f;
-const float MIN_FORCE = 10.0f, MAX_FORCE = 500000.0f;
+const float MIN_FORCE = 10.0f, MAX_FORCE = 5000.0f;
 
 Gui::Gui() : force(1000.0f), radius(4.0f), link_count(0), node_count(0) {};
 
