@@ -61,15 +61,15 @@ void ofApp::setup(){
   circle_mesh.enableIndices();
   circle_mesh.enableColors();
 
-  create_graph("graph1.txt");
+  create_graph("file");
   
   gui.create_gui();
 }
 
 std::pair<std::size_t, std::size_t> ofApp::get_grid_cell(const ofVec2f& pos) {
   return std::make_pair(
-    static_cast<std::size_t>(pos.x / ofGetWidth() / 4),
-    static_cast<std::size_t>(pos.y / ofGetHeight() / 2)
+    static_cast<std::size_t>(pos.x / ofGetWidth() / 6),
+    static_cast<std::size_t>(pos.y / ofGetHeight() / 6)
   );
 };
 
@@ -90,13 +90,23 @@ void ofApp::apply_node_repulsion(std::vector<std::size_t>& cell) {
   for(const auto& node_idx : cell) {
     for(const auto& neighbour_idx : nodes[node_idx]->neighbours) {
       const ofVec2f dir = nodes[neighbour_idx]->pos - nodes[node_idx]->pos;
-      const float length_squared = dir.lengthSquared();
-      if(length_squared == 0 || nodes[node_idx] == nodes[neighbour_idx]) continue;
+      const double epsilon = 1e-10;
+      const float length_squared = dir.lengthSquared() + epsilon;
       const ofVec2f force = dir / length_squared * gui.force;
       nodes[node_idx]->vel -= force;
       nodes[neighbour_idx]->vel += force; 
     }
   }
+  // for(const auto& node_idx : cell) {
+  //   for(const auto& next_node : nodes) {
+  //     const ofVec2f dir = next_node->pos - nodes[node_idx]->pos;
+  //     const double epsilon = 1e-10;
+  //     const float length_squared = dir.lengthSquared() + epsilon;
+  //     const ofVec2f force = dir / length_squared * gui.force;
+  //     nodes[node_idx]->vel -= force;
+  //     next_node->vel += force; 
+  //   }
+  // }
 };
 void ofApp::apply_link_forces(std::vector<std::size_t>& cell) {
   for(const auto& node_idx : cell) {
@@ -116,12 +126,16 @@ void ofApp::apply_force_directed_layout(std::vector<std::size_t>& cell) {
 
 void ofApp::apply_force_directed_layout_multithreaded() {
   populate_grid();
-  std::vector<std::thread> threads;
+  // std::vector<std::thread> threads;
+  // for(auto& cell : grid) {
+  //   threads.emplace_back(&ofApp::apply_force_directed_layout, this, std::ref(cell.second));
+  // }
+  // for (auto& thread : threads) {
+  //   thread.join();
+  // }
+
   for(auto& cell : grid) {
-    threads.emplace_back(&ofApp::apply_force_directed_layout, this, std::ref(cell.second));
-  }
-  for (auto& thread : threads) {
-    thread.join();
+    apply_force_directed_layout(cell.second);
   }
 }
 
@@ -227,7 +241,7 @@ void ofApp::keyPressed(int key){
 }
 
 void ofApp::create_nodes_and_links() {
-  for(std::size_t i = 0; i < 250; ++i) {
+  for(std::size_t i = 0; i < 500; ++i) {
     nodes.emplace_back(std::make_unique<Node>(
       i, ofVec2f{
         ofRandom(-START_DIST_MULTI*ofGetWidth() , START_DIST_MULTI*ofGetWidth()),
@@ -236,8 +250,8 @@ void ofApp::create_nodes_and_links() {
     );
   }
   for(std::size_t i = gui.node_count; i < nodes.size(); ++i) {
-    for(std::size_t j = 0; j < 3; ++j) {
-      std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size()));
+    for(std::size_t j = static_cast<int>(ofRandom(0, 5)); j < 5; ++j) {
+      std::size_t random_idx = static_cast<int>(ofRandom(0, nodes.size())); 
       while(random_idx == i) {
         random_idx = static_cast<int>(ofRandom(0, nodes.size()));
       };
@@ -367,7 +381,8 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
 }
 
-// Fix force-directed layout algorithm during multithreading - potentially using a spatial grid
+// Fix force-directed layout algorithm during multithreading - potentially using a spatial grid - done
+// Implement Barnes-Hut algorithm
 // Optimise circle creation by using OF_PRIMITIVE_TRIANGLE_STRIP / OF_PRIMITIVE_TRIANGLE_FAN
 // Create zoom functionality
 // Optimise label drawings by creating them on a mesh and then drawing once - maybe not possible.

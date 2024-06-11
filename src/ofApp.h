@@ -37,6 +37,8 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo) override;
 		void gotMessage(ofMessage msg) override;
 
+		void create_graph(std::string filename);
+
 		std::pair<std::size_t, std::size_t> get_grid_cell(const ofVec2f& pos);
 		void populate_grid();
 
@@ -58,12 +60,14 @@ class ofApp : public ofBaseApp{
 		void create_line(ofVboMesh &mesh, const std::unique_ptr<Node>& node1, const std::unique_ptr<Node>& node2);
 
 	private:
+		Gui gui;
+
+		std::vector<std::unique_ptr<Node> > nodes;
+
 		std::unordered_map<
 			std::pair<std::size_t, std::size_t>,
 			std::vector<std::size_t>, GridHash
 		> grid;
-
-		Gui gui;
 
 		const float GRAVITY = 1.1f;
 		const float START_DIST_MULTI = 1.0f;
@@ -71,8 +75,6 @@ class ofApp : public ofBaseApp{
 		ofVec2f mouse_position;
 		ofVec2f prev_mouse_position;
 		bool panning = false;
-
-		std::vector<std::unique_ptr<Node> > nodes;
 		int node_being_dragged_idx = -1;
 		float lerp_val = 0.2f;
 
