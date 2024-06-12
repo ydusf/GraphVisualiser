@@ -3,7 +3,6 @@
 #include "ofMain.h"
 
 #include <cstddef>
-#include <tuple>
 #include <memory>
 #include <string>
 

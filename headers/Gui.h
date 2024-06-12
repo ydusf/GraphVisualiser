@@ -3,6 +3,8 @@
 #include "ofMain.h"
 #include "ofxGui.h"
 
+#include <cstddef>
+
 class Gui {
 public:
   float force;
@@ -16,8 +18,8 @@ public:
 
   Gui();
 
-  void create_gui();
-  void update_gui();
+  void setup();
+  void update();
   void draw();
 
 private:

@@ -1,11 +1,14 @@
-#include "Gui.h"
+#include "../headers/Gui.h"
 
-const float MIN_RADIUS = 1.0f, MAX_RADIUS = 15.0f;
-const float MIN_FORCE = 10.0f, MAX_FORCE = 5000.0f;
+#include <string>
+#include <cstddef>
 
-Gui::Gui() : force(1000.0f), radius(4.0f), link_count(0), node_count(0) {};
+const float START_RADIUS = 4.0f, MIN_RADIUS = 1.0f, MAX_RADIUS = 15.0f;
+const float START_FORCE = 1000.0f, MIN_FORCE = 10.0f, MAX_FORCE = 200000.0f;
 
-void Gui::create_gui() {
+Gui::Gui() : force(START_FORCE), radius(START_RADIUS), link_count(0), node_count(0) {};
+
+void Gui::setup() {
   m_panel.setup();
   m_panel.add(m_force_slider.setup("Force Multiplier", force, MIN_FORCE, MAX_FORCE));
   m_panel.add(m_radius_slider.setup("Node Radius", radius, MIN_RADIUS, MAX_RADIUS));
@@ -30,7 +33,7 @@ void Gui::radius_slider_changed(float & new_radius) { radius = new_radius; }
 
 void Gui::force_slider_changed(float & new_force) { force = new_force; }
 
-void Gui::update_gui() {
+void Gui::update() {
   ofSetWindowTitle("FPS: " + std::to_string(ofGetFrameRate()) + " | Nodes: " + std::to_string(node_count) + " | Links: " + std::to_string(link_count));
   update_color(node_color, m_node_color_slider, m_node_color_label);
   update_color(link_color, m_link_color_slider, m_link_color_label);

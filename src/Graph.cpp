@@ -1,37 +1,38 @@
-#include "Graph.h"
+#include "../headers/Graph.h"
+#include "../headers/Node.h"
+#include "../headers/Mesh.h"
+#include "../headers/Layout.h"
+#include "../headers/Grid.h"
 
-#include <string>
 #include <memory>
-#include <tuple>
-#include <cstddef>
 
-namespace {
-  const ofVec2f g_initial_velocity = {1.0f, 1.0f};
-  const int g_size_of_char = 8;
+Graph::Graph()
+  : nodes(std::vector<std::unique_ptr<Node>>()),
+    mesh(std::make_unique<Mesh>()),
+    layout(std::make_unique<Layout>()),
+    grid(std::make_unique<SpatialGrid>())
+  
+  {};
+
+void Graph::setup() {
+  mesh->setup();
 }
 
-Node::Node(std::size_t id, const ofVec2f& pos, float radius, std::string label)
-  : pos(pos), vel(g_initial_velocity),
-  radius(radius), label(label), m_id(id) 
-{};
+void Graph::update() {
+  for (const std::unique_ptr<Node>& node : nodes) {
+    node->update();
+  }
 
-bool Node::operator==(const std::unique_ptr<Node>& node) const {
-  return m_id == node->m_id;
-};
+  grid->clear();
+  grid->populate(nodes);
 
-bool Node::within_bounds() const {
-  const ofVec2f bounds = {ofGetWidth() / 2.0f, ofGetHeight() / 2.0f};
-  return (pos.x+radius) > -bounds.x && (pos.x-radius) < bounds.x && (pos.y+radius) > -bounds.y && (pos.y-radius) < bounds.y;
-};
+  for(auto&[cell, cell_nodes] : grid->grid) {
+    layout->apply_force_directed_layout(nodes, cell_nodes);
+  }
+}
 
-void Node::update() {
-  pos += vel * ofGetLastFrameTime();
-};
-
-void Node::draw_label(const ofColor& label_color) const {
-  if(!within_bounds()) return;
-  ofSetColor(label_color);
-  const int LABEL_OFFSET_X = (label.length() * g_size_of_char) / 2;
-  const int LABEL_OFFSET_Y = radius * 1.5;
-  ofDrawBitmapString(label, pos.x-LABEL_OFFSET_X, pos.y-LABEL_OFFSET_Y);
-};
+void Graph::draw() {
+  mesh->clear_meshes();
+  mesh->create_meshes(nodes);
+  mesh->draw();
+}
