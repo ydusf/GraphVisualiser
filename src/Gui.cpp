@@ -4,7 +4,7 @@
 #include <cstddef>
 
 const float START_RADIUS = 4.0f, MIN_RADIUS = 1.0f, MAX_RADIUS = 15.0f;
-const float START_FORCE = 1000.0f, MIN_FORCE = 10.0f, MAX_FORCE = 200000.0f;
+const float START_FORCE = 1000.0f, MIN_FORCE = 10.0f, MAX_FORCE = 5000.0f;
 
 Gui::Gui() : force(START_FORCE), radius(START_RADIUS), link_count(0), node_count(0) {};
 

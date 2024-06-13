@@ -10,7 +10,7 @@ Graph::Graph()
   : nodes(std::vector<std::unique_ptr<Node>>()),
     mesh(std::make_unique<Mesh>()),
     layout(std::make_unique<Layout>()),
-    grid(std::make_unique<SpatialGrid>())
+    spatial_grid(std::make_unique<SpatialGrid>())
   
   {};
 
@@ -23,10 +23,11 @@ void Graph::update() {
     node->update();
   }
 
-  grid->clear();
-  grid->populate(nodes);
+  spatial_grid->clear();
+  spatial_grid->populate(nodes);
 
-  for(auto&[cell, cell_nodes] : grid->grid) {
+  for(auto&[cell, cell_nodes] : spatial_grid->grid) {
+    if(cell_nodes.empty()) continue;
     layout->apply_force_directed_layout(nodes, cell_nodes);
   }
 }

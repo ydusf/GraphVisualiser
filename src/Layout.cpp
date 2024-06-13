@@ -4,10 +4,13 @@
 #include <memory>
 #include <vector>
 #include <cstddef>
+#include <cassert>
 
-const float GRAVITY = 1.1f;
+const float GRAVITY = 2.5f;
 
-Layout::Layout() {};
+void Layout::level_of_detail() {
+  
+};
 
 void Layout::apply_gravity(std::vector<std::unique_ptr<Node>>& nodes, const std::vector<std::size_t>& cell) {
   for(const std::size_t& node_idx : cell) {
@@ -16,13 +19,15 @@ void Layout::apply_gravity(std::vector<std::unique_ptr<Node>>& nodes, const std:
 };
 void Layout::apply_node_repulsion(std::vector<std::unique_ptr<Node>>& nodes, const std::vector<std::size_t>& cell) {
   // for(const std::size_t& node_idx : cell) {
-  //   for(const std::size_t& neighbour_idx : nodes[node_idx]->neighbours) {
-  //     const ofVec2f dir = nodes[neighbour_idx]->pos - nodes[node_idx]->pos;
-  //     const double epsilon = 1e-10;
+  //   for(const std::size_t& next_node : nodes[node_idx]->neighbours) {
+  //     if(nodes[node_idx] == nodes[next_node]) continue;
+  //     const ofVec2f dir = nodes[next_node]->pos - nodes[node_idx]->pos;
+  //     const double epsilon = 1e-10; 
   //     const float length_squared = dir.lengthSquared() + epsilon;
-  //     const ofVec2f force = dir / length_squared * gui.force;
+  //     assert(length_squared > 0);
+  //     const ofVec2f force = dir / length_squared * m_force_multi;
   //     nodes[node_idx]->vel -= force;
-  //     nodes[neighbour_idx]->vel += force; 
+  //     nodes[next_node]->vel += force; 
   //   }
   // }
   for(const std::size_t& node_idx : cell) {
@@ -31,6 +36,7 @@ void Layout::apply_node_repulsion(std::vector<std::unique_ptr<Node>>& nodes, con
       const ofVec2f dir = next_node->pos - nodes[node_idx]->pos;
       const double epsilon = 1e-10; 
       const float length_squared = dir.lengthSquared() + epsilon;
+      assert(length_squared > 0);
       const ofVec2f force = dir / length_squared * m_force_multi;
       nodes[node_idx]->vel -= force;
       next_node->vel += force; 

@@ -5,14 +5,17 @@
 #include <cstddef>
 #include <vector>
 
-Mesh::Mesh() {};
-
 void Mesh::setup() {
   m_line_mesh.setMode(OF_PRIMITIVE_LINES);
   m_line_mesh.enableColors();
   m_circle_mesh.setMode(OF_PRIMITIVE_TRIANGLES);
   m_circle_mesh.enableIndices();
   m_circle_mesh.enableColors();
+};
+
+void Mesh::create_vertex(ofVboMesh& mesh, const ofVec3f& pos, const ofColor& color) {
+  mesh.addVertex(pos);
+  mesh.addColor(color);
 };
 
 void Mesh::create_circle(const std::unique_ptr<Node>& node) {
@@ -32,21 +35,16 @@ void Mesh::create_circle(const std::unique_ptr<Node>& node) {
     const float vy1 = CENTRE.y + node->radius * sin(ANGLE_INCREMENT * i);
     const float vx2 = CENTRE.x + node->radius * cos(ANGLE_INCREMENT * (i+1));
     const float vy2 = CENTRE.y + node->radius * sin(ANGLE_INCREMENT * (i+1));
-    m_circle_mesh.addVertex(CENTRE);
-    m_circle_mesh.addColor(m_node_color);
-    m_circle_mesh.addVertex(ofVec3f{vx1, vy1, 0.0f});
-    m_circle_mesh.addColor(m_node_color);
-    m_circle_mesh.addVertex(ofVec3f{vx2, vy2, 0.0f});
-    m_circle_mesh.addColor(m_node_color);
+    create_vertex(m_circle_mesh, CENTRE, m_node_color);
+    create_vertex(m_circle_mesh, ofVec3f{vx1, vy1, 0.0f}, m_node_color);
+    create_vertex(m_circle_mesh, ofVec3f{vx2, vy2, 0.0f}, m_node_color);
   }
 }
 
 void Mesh::create_line(const std::unique_ptr<Node>& node1, const std::unique_ptr<Node>& node2) {
   if(!node1->within_bounds() && !node2->within_bounds()) return;
-  m_line_mesh.addVertex(ofVec3f(node1->pos.x, node1->pos.y, 0.0f));
-  m_line_mesh.addColor(m_link_color);
-  m_line_mesh.addVertex(ofVec3f(node2->pos.x, node2->pos.y, 0.0f));
-  m_line_mesh.addColor(m_link_color);
+  create_vertex(m_line_mesh, ofVec3f{node1->pos.x, node1->pos.y, 0.0f}, m_link_color);
+  create_vertex(m_line_mesh, ofVec3f{node2->pos.x, node2->pos.y, 0.0f}, m_link_color);
 }
 
 void Mesh::create_meshes(std::vector<std::unique_ptr<Node>>& nodes) {
@@ -61,6 +59,12 @@ void Mesh::create_meshes(std::vector<std::unique_ptr<Node>>& nodes) {
 
 void Mesh::set_circle_resolution(float new_resolution) {
   m_circle_resolution = new_resolution;
+};
+
+void Mesh::set_colors(const ofColor& node_color, const ofColor& link_color, const ofColor& label_color) {
+  m_node_color = node_color;
+  m_link_color = link_color;
+  m_label_color = label_color;
 };
 
 void Mesh::draw() {

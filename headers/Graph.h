@@ -16,7 +16,7 @@ public:
   std::vector<std::unique_ptr<Node> > nodes;
   std::unique_ptr<Mesh> mesh;  
   std::unique_ptr<Layout> layout;
-  std::unique_ptr<SpatialGrid> grid;
+  std::unique_ptr<SpatialGrid> spatial_grid;
   
   Graph();
 

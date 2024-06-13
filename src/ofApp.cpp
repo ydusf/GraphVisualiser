@@ -77,6 +77,7 @@ void ofApp::update(){
   graph.update();
 
   graph.mesh->set_circle_resolution(std::clamp(gui.radius*1.5f, 4.0f, 25.0f));
+  graph.mesh->set_colors(gui.node_color, gui.link_color, gui.label_color);
   graph.layout->set_force_multi(gui.force);
 
   // user interaction
@@ -221,12 +222,7 @@ void ofApp::mouseReleased(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mouseScrolled(int x, int y, float scrollX, float scrollY){
-  // // zoom functionality
-  // scrollY = std::clamp(scrollY, -1.0f, 1.0f);
-  // force = std::clamp(force * scrollY, MIN_FORCE, MAX_FORCE);
-  // for(const std::unique_ptr<Node>& node : nodes) {
-  //   node->radius = std::clamp(glm::abs(node->radius - (scrollY * 0.1f)), MIN_RADIUS, MAX_RADIUS);
-  // }
+
 }
 
 //--------------------------------------------------------------
@@ -253,8 +249,6 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
 }
 
-// Fix force-directed layout algorithm during multithreading - potentially using a spatial grid - done
-// Implement Barnes-Hut algorithm
 // Optimise circle creation by using OF_PRIMITIVE_TRIANGLE_STRIP / OF_PRIMITIVE_TRIANGLE_FAN
-// Create zoom functionality
+// Create zoom functionality (by scrolling)
 // Optimise label drawings by creating them on a mesh and then drawing once - maybe not possible.
