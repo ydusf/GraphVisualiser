@@ -60,7 +60,7 @@ void ofApp::setup(){
   ofEnableSmoothing();
   ofSetFrameRate(60);
 
-  create_graph("file");
+  // create_graph("file");
   gui.setup();
   graph.setup();
 
@@ -114,7 +114,7 @@ void ofApp::keyPressed(int key){
 }
 
 void ofApp::create_nodes_and_links() {
-  for(std::size_t i = 0; i < 250; ++i) {
+  for(std::size_t i = 0; i < 25; ++i) {
     graph.nodes.emplace_back(std::make_unique<Node>(
       i, ofVec2f{
         ofRandom(-START_DIST_MULTI*ofGetWidth(), START_DIST_MULTI*ofGetWidth()),
@@ -123,7 +123,7 @@ void ofApp::create_nodes_and_links() {
     );
   }
   for(std::size_t i = gui.node_count; i < graph.nodes.size(); ++i) {
-    for(std::size_t j = static_cast<int>(ofRandom(0, 5)); j < 5; ++j) {
+    for(std::size_t j = static_cast<int>(ofRandom(0, 2)); j < 3; ++j) {
       std::size_t random_idx = static_cast<int>(ofRandom(0, graph.nodes.size())); 
       while(random_idx == i) {
         random_idx = static_cast<int>(ofRandom(0, graph.nodes.size()));

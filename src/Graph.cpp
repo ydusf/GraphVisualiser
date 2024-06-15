@@ -18,10 +18,16 @@ void Graph::setup() {
   mesh->setup();
 }
 
+void Graph::level_of_detail() {
+  
+};
+
 void Graph::update() {
   for (const std::unique_ptr<Node>& node : nodes) {
     node->update();
   }
+
+  level_of_detail();
 
   spatial_grid->clear();
   spatial_grid->populate(nodes);

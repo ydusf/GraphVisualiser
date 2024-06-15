@@ -12,6 +12,7 @@ public:
   float radius;
   std::string label;
   std::vector<std::size_t> neighbours;
+  std::vector<std::unique_ptr<Node> > combined;
 
   Node(std::size_t id, const ofVec2f& pos, float radius, std::string label);
 

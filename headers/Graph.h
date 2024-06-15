@@ -23,6 +23,10 @@ public:
   void setup();
   void update();
   void draw();
+
+private:
+
+  void level_of_detail();
 };
 
 #endif // GRAPH_H
