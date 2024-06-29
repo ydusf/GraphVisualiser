@@ -159,3 +159,5 @@ vendor
 graph_data
 *.js
 generate_graph.txt
+deleted_files
+bin

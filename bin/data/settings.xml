@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <group>
-	<Force_Multiplier>500</Force_Multiplier>
-	<Node_Radius>4</Node_Radius>
+	<Force_Multiplier>13.495</Force_Multiplier>
+	<Node_Radius>1</Node_Radius>
+	<UnknownName>255, 255, 255, 255</UnknownName>
 </group>

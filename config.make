@@ -129,7 +129,7 @@ PROJECT_CFLAGS =
 #
 #   Note: Leave a leading space when adding list items with the += operator
 ################################################################################
-PROJECT_OPTIMIZATION_CFLAGS_RELEASE = -O3 -flto -march=native -ftree-vectorize -funroll-loops -fomit-frame-pointer
+PROJECT_OPTIMIZATION_CFLAGS_RELEASE = -O3 -flto -march=native -ftree-vectorize -funroll-loops -fomit-frame-pointer -ffast-math
 PROJECT_OPTIMIZATION_CFLAGS_DEBUG = -O0 -g
 
 ################################################################################

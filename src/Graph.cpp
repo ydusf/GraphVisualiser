@@ -2,17 +2,18 @@
 #include "../headers/Node.h"
 #include "../headers/Mesh.h"
 #include "../headers/Layout.h"
-#include "../headers/Grid.h"
+#include "../headers/BarnesHut.h"
 
 #include <memory>
 
 Graph::Graph()
   : nodes(std::vector<std::unique_ptr<Node>>()),
     mesh(std::make_unique<Mesh>()),
-    layout(std::make_unique<Layout>()),
-    spatial_grid(std::make_unique<SpatialGrid>())
-  
-  {};
+    layout(std::make_unique<Layout>())
+  {
+    Quad boundary = Quad(0, 0, static_cast<int>(ofGetWidth()), static_cast<int>(ofGetHeight()));
+    quad_tree = std::make_unique<QuadTree>(boundary, 4);
+  };
 
 void Graph::setup() {
   mesh->setup();
@@ -29,17 +30,17 @@ void Graph::update() {
 
   level_of_detail();
 
-  spatial_grid->clear();
-  spatial_grid->populate(nodes);
-
-  for(auto&[cell, cell_nodes] : spatial_grid->grid) {
-    if(cell_nodes.empty()) continue;
-    layout->apply_force_directed_layout(nodes, cell_nodes);
+  quad_tree->clear();
+  for(std::unique_ptr<Node>& node : nodes) {
+    quad_tree->insert(*node);
   }
+
+  layout->apply_force_directed_layout(nodes, *quad_tree);
 }
 
 void Graph::draw() {
   mesh->clear_meshes();
   mesh->create_meshes(nodes);
   mesh->draw();
+  quad_tree->draw();
 }

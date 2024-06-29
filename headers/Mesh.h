@@ -25,6 +25,6 @@ private:
 
   void create_vertex(ofVboMesh& mesh, const ofVec3f& pos, const ofColor& color);
   void create_index(ofVboMesh& mesh, std::size_t centre_idx, std::size_t current_idx);
-  void create_circle(const std::unique_ptr<Node>& node);
-  void create_line(const std::unique_ptr<Node>& node1, const std::unique_ptr<Node>& node2);
+  void create_circle(const Node& node);
+  void create_line(const Node& node1, const Node& node2);
 };

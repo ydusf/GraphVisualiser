@@ -46,7 +46,7 @@ void ofApp::create_graph(std::string filename) {
     if(!(iss >> first >> second)) {
       continue;
     }
-    graph.nodes[first]->neighbours.push_back(second);
+    graph.nodes[first]->connections.push_back(second);
     gui.link_count++;
   }
   gui.node_count = graph.nodes.size();
@@ -73,12 +73,12 @@ void ofApp::update(){
   for(const std::unique_ptr<Node>& node : graph.nodes) {
     node->radius = gui.radius;
   }
-
-  graph.update();
-
+  
   graph.mesh->set_circle_resolution(std::clamp(gui.radius*1.5f, 4.0f, 25.0f));
   graph.mesh->set_colors(gui.node_color, gui.link_color, gui.label_color);
   graph.layout->set_force_multi(gui.force);
+
+  graph.update();
 
   // user interaction
   if(node_being_dragged_idx != -1) drag();
@@ -90,7 +90,7 @@ void ofApp::draw(){
   gui.draw();
 
   // centralise visualisation
-  ofTranslate(ofGetWidth() / 2, ofGetHeight() / 2);
+  ofTranslate(ofGetWidth() * 0.5f, ofGetHeight() * 0.5f);
 
   graph.draw();
 };
@@ -116,19 +116,27 @@ void ofApp::keyPressed(int key){
 void ofApp::create_nodes_and_links() {
   for(std::size_t i = 0; i < 25; ++i) {
     graph.nodes.emplace_back(std::make_unique<Node>(
-      i, ofVec2f{
+      gui.node_count + i, ofVec2f{
         ofRandom(-START_DIST_MULTI*ofGetWidth(), START_DIST_MULTI*ofGetWidth()),
         ofRandom(-START_DIST_MULTI*ofGetHeight(), START_DIST_MULTI*ofGetHeight())
-      }, gui.radius, std::to_string(i))
+      }, gui.radius, std::to_string(gui.node_count + i))
     );
   }
   for(std::size_t i = gui.node_count; i < graph.nodes.size(); ++i) {
-    for(std::size_t j = static_cast<int>(ofRandom(0, 2)); j < 3; ++j) {
-      std::size_t random_idx = static_cast<int>(ofRandom(0, graph.nodes.size())); 
-      while(random_idx == i) {
-        random_idx = static_cast<int>(ofRandom(0, graph.nodes.size()));
-      };
-      graph.nodes[i]->neighbours.push_back(random_idx);
+    for(std::size_t j = 0; j < ofRandom(0, 10); ++j) {
+      std::size_t random_idx;
+      
+      if(ofRandom(0, 1) > 0.9) {
+        random_idx = static_cast<int>(ofRandom(0, graph.nodes.size())); 
+      } else {
+        const int upper_bound = std::clamp(i * 1.15f, 0.0f, (float)graph.nodes.size());
+        const int lower_bound = std::clamp(i * 0.85f, 0.0f, (float)graph.nodes.size());
+        random_idx = static_cast<int>(ofRandom(static_cast<int>(lower_bound), static_cast<int>(upper_bound)));
+      }
+
+      if(random_idx == i) continue;
+
+      graph.nodes[i]->connections.push_back(random_idx);
       gui.link_count++;
     }
   }
@@ -142,7 +150,7 @@ void ofApp::keyReleased(int key){
 
 void ofApp::update_mouse_position() {
   prev_mouse_position = mouse_position;
-  mouse_position = {ofGetMouseX() - ofGetWidth() / 2.0f, ofGetMouseY() - ofGetHeight() / 2.0f};
+  mouse_position = {ofGetMouseX() - ofGetWidth() * 0.5f, ofGetMouseY() - ofGetHeight() * 0.5f};
 }
 
 //--------------------------------------------------------------
@@ -209,7 +217,7 @@ void ofApp::mousePressed(int x, int y, int button){
       std::to_string(graph.nodes.size())
     ));
     if(graph.nodes.size() < 2) return;
-    graph.nodes[graph.nodes.size()-1]->neighbours.push_back(closest_node);
+    graph.nodes[graph.nodes.size()-1]->connections.push_back(closest_node);
   }
 }
 
@@ -248,7 +256,3 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
 }
-
-// Optimise circle creation by using OF_PRIMITIVE_TRIANGLE_STRIP / OF_PRIMITIVE_TRIANGLE_FAN
-// Create zoom functionality (by scrolling)
-// Optimise label drawings by creating them on a mesh and then drawing once - maybe not possible.

@@ -2,7 +2,7 @@
 
 #include "ofMain.h"
 #include "Node.h"
-#include "Grid.h"
+#include "BarnesHut.h"
 #include "Layout.h"
 #include "Mesh.h"
 
@@ -16,7 +16,7 @@ public:
   std::vector<std::unique_ptr<Node> > nodes;
   std::unique_ptr<Mesh> mesh;  
   std::unique_ptr<Layout> layout;
-  std::unique_ptr<SpatialGrid> spatial_grid;
+  std::unique_ptr<QuadTree> quad_tree;
   
   Graph();
 
