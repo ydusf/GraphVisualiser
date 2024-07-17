@@ -17,6 +17,7 @@ private:
 
   void apply_gravity(std::vector<std::unique_ptr<Node>>& nodes);
   void resolve_node_repulsion(Node& curr_node, Node& next_node);
-  void apply_node_repulsion(std::vector<std::unique_ptr<Node>>& nodes, QuadTree& spatial_grid);
-  void apply_link_forces(std::vector<std::unique_ptr<Node>>& nodes);
+  void apply_node_repulsions(std::vector<std::unique_ptr<Node>>& nodes, QuadTree& spatial_grid);
+  void resolve_link_attraction(Node& curr_node, Node& conn_node);
+  void apply_link_attractions(std::vector<std::unique_ptr<Node>>& nodes);
 };

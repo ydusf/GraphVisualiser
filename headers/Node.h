@@ -12,7 +12,7 @@ class Node {
 public:
   ofVec2f pos, vel;
   float radius;
-  std::vector<std::size_t> connections;
+  std::vector<std::size_t> edges;
   std::string label;
 
   Node(std::size_t id, const ofVec2f& pos, float radius, std::string label);

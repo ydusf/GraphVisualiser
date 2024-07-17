@@ -74,7 +74,7 @@ void Mesh::create_meshes(std::vector<std::unique_ptr<Node>>& nodes) {
     Node& curr_node = *nodes[node_idx];
     create_circle(curr_node);
     // curr_node.draw_label(m_label_color);
-    for(const std::size_t& conn : curr_node.connections) {
+    for(const std::size_t& conn : curr_node.edges) {
       Node& conn_node = *nodes[conn];
       create_line(curr_node, conn_node);
     }

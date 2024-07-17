@@ -46,7 +46,8 @@ void ofApp::create_graph(std::string filename) {
     if(!(iss >> first >> second)) {
       continue;
     }
-    graph.nodes[first]->connections.push_back(second);
+    graph.nodes[first]->edges.push_back(second);
+    graph.nodes[second]->edges.push_back(first);
     gui.link_count++;
   }
   gui.node_count = graph.nodes.size();
@@ -58,7 +59,7 @@ void ofApp::create_graph(std::string filename) {
 void ofApp::setup(){
   ofBackground(ofColor::black);
   ofEnableSmoothing();
-  ofSetFrameRate(60);
+  ofSetFrameRate(0);
 
   // create_graph("file");
   gui.setup();
@@ -115,11 +116,14 @@ void ofApp::keyPressed(int key){
 
 void ofApp::create_nodes_and_links() {
   for(std::size_t i = 0; i < 25; ++i) {
-    graph.nodes.emplace_back(std::make_unique<Node>(
-      gui.node_count + i, ofVec2f{
+    graph.add_node(
+      gui.node_count + i,
+      ofVec2f{
         ofRandom(-START_DIST_MULTI*ofGetWidth(), START_DIST_MULTI*ofGetWidth()),
         ofRandom(-START_DIST_MULTI*ofGetHeight(), START_DIST_MULTI*ofGetHeight())
-      }, gui.radius, std::to_string(gui.node_count + i))
+      },
+      gui.radius,
+      std::to_string(gui.node_count + i)
     );
   }
   for(std::size_t i = gui.node_count; i < graph.nodes.size(); ++i) {
@@ -136,8 +140,8 @@ void ofApp::create_nodes_and_links() {
 
       if(random_idx == i) continue;
 
-      graph.nodes[i]->connections.push_back(random_idx);
-      gui.link_count++;
+      graph.add_edge(i, random_idx);
+      gui.link_count+=2;
     }
   }
   gui.node_count = graph.nodes.size();
@@ -217,7 +221,7 @@ void ofApp::mousePressed(int x, int y, int button){
       std::to_string(graph.nodes.size())
     ));
     if(graph.nodes.size() < 2) return;
-    graph.nodes[graph.nodes.size()-1]->connections.push_back(closest_node);
+    graph.nodes[graph.nodes.size()-1]->edges.push_back(closest_node);
   }
 }
 
@@ -230,7 +234,8 @@ void ofApp::mouseReleased(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mouseScrolled(int x, int y, float scrollX, float scrollY){
-
+  gui.force = std::clamp(scrollY > 0 ? gui.force *= 0.9f : gui.force *= 1.1f, 1.0f, 2500.0f);
+  gui.radius = std::clamp(scrollY > 0 ? gui.radius *= 0.95f : gui.radius *= 1.05f, 1.0f, 15.0f);
 }
 
 //--------------------------------------------------------------

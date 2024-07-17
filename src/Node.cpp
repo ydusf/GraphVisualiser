@@ -7,8 +7,6 @@
 namespace {
   const ofVec2f g_initial_velocity{1.0f, 1.0f};
   constexpr int g_size_of_char = 8;
-  constexpr float CELL_SIZE_X = 4;
-  constexpr float CELL_SIZE_Y = 2;
 }
 
 Node::Node(std::size_t id, const ofVec2f& pos, float radius, std::string label)
@@ -23,7 +21,7 @@ bool Node::operator==(const Node& node) const {
 bool Node::within_bounds() const {
   const ofVec2f bounds = {ofGetWidth() * 0.5f, ofGetHeight() * 0.5f};
   return (pos.x+radius) > -bounds.x && (pos.x-radius) < bounds.x && (pos.y+radius) > -bounds.y && (pos.y-radius) < bounds.y;
-};  
+};
 
 void Node::update() {
   pos += vel * ofGetLastFrameTime();

@@ -9,6 +9,9 @@
 #include <functional>
 #include <vector>
 
+#define likely(x)    __builtin_expect (!!(x), 1)
+#define unlikely(x)  __builtin_expect (!!(x), 0)
+
 // https://en.wikipedia.org/wiki/Quadtree
 
 Quad::Quad(float x, float y, float w, float h) : x(x), y(y), w(w), h(h) {};
@@ -29,7 +32,7 @@ bool Quad::intersects(const Quad& range) const {
     range.y - range.h > y + h ||
     range.y + range.h < y - h
   );
-}
+};
 
 QuadTree::QuadTree(const Quad &boundary, int capacity)
   : m_boundary(std::make_unique<Quad>(boundary)),
@@ -61,7 +64,7 @@ void QuadTree::insert(const Node& node) {
 
   if(m_nodes.size() < m_capacity) {
     m_nodes.push_back(node.get_id());
-    avg_pos = (avg_pos * (m_nodes.size()-1) + node.pos) / m_nodes.size();
+    m_boundary->mid_point = (m_boundary->mid_point * (m_nodes.size()-1) + node.pos) / m_nodes.size();
   } else {
     if(!m_divided) {
       subdivide();
@@ -74,42 +77,48 @@ void QuadTree::insert(const Node& node) {
   };
 };
 
-std::vector<std::size_t> QuadTree::get_nearby_nodes(const Node& curr_node, std::vector<std::unique_ptr<Node>>& nodes, const float& cell_size) const {
-  std::vector<std::size_t> nodes_found;
+ofVec2f QuadTree::calculate_force(const ofVec2f& first_pos, const ofVec2f& second_pos, const float force_multi) const {
+  const ofVec2f dir = first_pos - second_pos;
+  const float length_squared = dir.lengthSquared();
+  if(length_squared > 0) [[likely]] {
+    return dir * (1 / length_squared) * force_multi;
+  }
+  return ofVec2f{0.0f, 0.0f};
+}
 
-  const float half_cell_size = cell_size * 0.5f;
+// Doesn't quite work as intended. 
+void QuadTree::traverse(Node& curr_node, std::vector<std::unique_ptr<Node>>& nodes, const float force_multi, const float theta) {
+  const float s = m_boundary->w;
+  const float dist = m_boundary->mid_point.distance(curr_node.pos);
 
-  const Quad range(curr_node.pos.x - half_cell_size, curr_node.pos.y - half_cell_size, cell_size, cell_size);
-
-  if(!m_boundary->intersects(range)) return nodes_found;
-  
-  for(const std::size_t& node_id : m_nodes) {
-    if(!range.contains(*nodes[node_id])) continue;
-    nodes_found.push_back(node_id);
+  if(theta > s / dist) {
+    const ofVec2f force = calculate_force(m_boundary->mid_point, curr_node.pos, force_multi);
+    curr_node.vel -= force;
+    for(const std::size_t& next : m_nodes) {
+      Node& next_node = *nodes[next];
+      next_node.vel += force;
+    };
+  } else {
+    for(const std::size_t& next : m_nodes) {
+      Node& next_node = *nodes[next];
+      const ofVec2f force = calculate_force(next_node.pos, curr_node.pos, force_multi);
+      curr_node.vel -= force;
+      next_node.vel += force;
+    };
   };
 
-  if(!m_divided) return nodes_found;
-
-  auto nearby_nodes = m_NE->get_nearby_nodes(curr_node, nodes, cell_size);
-  nodes_found.insert(nodes_found.end(), nearby_nodes.begin(), nearby_nodes.end());
-
-  nearby_nodes = m_NW->get_nearby_nodes(curr_node, nodes, cell_size);
-  nodes_found.insert(nodes_found.end(), nearby_nodes.begin(), nearby_nodes.end());
-
-  nearby_nodes = m_SE->get_nearby_nodes(curr_node, nodes, cell_size);
-  nodes_found.insert(nodes_found.end(), nearby_nodes.begin(), nearby_nodes.end());
-
-  nearby_nodes = m_SW->get_nearby_nodes(curr_node, nodes, cell_size);
-  nodes_found.insert(nodes_found.end(), nearby_nodes.begin(), nearby_nodes.end());
-
-  return nodes_found;
-  
+  if(m_divided) {
+    m_NE->traverse(curr_node, nodes, force_multi, theta);
+    m_SE->traverse(curr_node, nodes, force_multi, theta);
+    m_SW->traverse(curr_node, nodes, force_multi, theta);
+    m_NW->traverse(curr_node, nodes, force_multi, theta);
+  };
 };
 
 void QuadTree::clear() {
   m_nodes.clear();
 
-  if (m_divided) {
+  if(m_divided) {
     m_NE->clear();
     m_NW->clear();
     m_SE->clear();
@@ -121,7 +130,7 @@ void QuadTree::clear() {
     m_SW.reset();
 
     m_divided = false;
-  }
+  };
 };  
 
 void QuadTree::draw_helper() const {
@@ -144,5 +153,5 @@ void QuadTree::draw() const {
     m_NW->draw();
     m_SE->draw();
     m_SW->draw();
-  }
-}
+  };
+};
